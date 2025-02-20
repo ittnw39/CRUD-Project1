@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+            crossorigin="anonymous"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Ballet:opsz@16..72&family=Concert+One&family=Jua&family=Micro+5+Charted&family=Sixtyfour&display=swap" rel="stylesheet">
+
+    <style>
+        html,
+        body {
+           font-family: "Jua", sans-serif;
+           font-weight: 500;
+           font-size: 20px;
+        }
+
+        .dropdown-toggle:after {
+          content: none;
+        }
+
+        .comment .btn-group {
+          display: none;
+        }
+
+        .comment:hover .btn-group {
+          display: flex;
+        }
+        .material-symbols-outlined{
+          font-weight: 300;
+        }
+        .px-2{
+           padding-top: .3rem !important;
+           padding-bottom: .3rem !important;
+           color: black;
+        }
+        .rating-display h4 {
+            display: inline; /* 제목과 별점을 같은 줄에 표시 */
+            margin-right: 10px; /* 제목과 별점 사이의 간격 */
+        }
+
+        #password {
+        border: var(--bs-border-width) solid #dee2e6;
+        border-radius: var(--bs-border-radius);
+        padding: .1rem .5rem;
+      }
+
+    </style>
+    <title th:text="${post.title}"></title>
+</head>
+<body>
+<div class="container my-5 mx-auto">
+    <a
+            class="link link-offset-1 link-offset-2-hover text-sm fs-6 mb-2 d-block"
+            style="transition: all 0.1s ease-in-out; color: coral;"
+            th:href="@{/boards/{boardId}(boardId=${post.board.id})}"
+    >&larr; 게시판으로 돌아가기</a
+    >
+    <div class="container border rounded p-4 position-relative">
+        <div class="header mb-3">
+            <h2 class="text-start" th:text="${post.title}">게시글 제목</h2>
+        </div>
+        <p class="m-0" th:text="${post.content}">게시글 내용</p>
+        <hr class="mt-4"/>
+        <div class="rating-display">
+            <div id="displayStars" th:data-rated="${post.ratedStars}" style="font-size: 30px; -webkit-text-stroke: 1px black;"></div>
+        </div>
+        <hr class="mt-4"/>
+        <h4 class="mb-3">
+            댓글
+            <small
+                    class="text-secondary"
+                    id="commentsCount"
+                    th:text="${comments.size()}"
+            >0</small
+            >
+        </h4>
+        <div
+            class="container p-0 d-flex flex-column align-items-start gap-2"
+            th:unless="${#lists.isEmpty(comments)}"
+        >
+            <div
+                    class="card comment"
+                    style="min-width: 30%"
+                    th:each="comment : ${comments}"
+            >
+                <div class="card-body position-relative">
+                    <p class="mb-2" th:text="${comment.content}">댓글 내용</p>
+                    <small class="text-secondary">2024-01-04T13:21:21</small>
+
+                    <div
+                            class="position-absolute end-0 top-50 translate-middle-y mb-3 me-3 btn-group bg-white bg-opacity-75"
+                            role="group"
+                            aria-label="edit-delete"
+                    >
+                        <button
+                                class="btn btn-outline-primary lh-1"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editCommentModal"
+                                th:onclick="handleEditCommentButton(event, [[${comment.id}]], [[${comment.content}]]);"
+                        >
+                            <span class="material-symbols-outlined"> edit </span>
+                        </button>
+                        <button
+                                class="btn btn-outline-danger lh-1"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteCommentModal"
+                                th:onclick="handleDeleteCommentButton(event, [[${comment.id}]]);"
+                        >
+                            <span class="material-symbols-outlined"> delete </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <span
+                th:if="${#lists.isEmpty(comments)}"
+                class="d-block w-100 text-center"
+        >댓글이 없습니다.</span
+        >
+
+        <form class="mt-3 row" th:action="@{/comments/create}" method="POST">
+            <input type="hidden" name="postId" th:value="${post.id}"/>
+            <div class="input-group">
+                <div class="mb-2">
+                    <input type="password" class="form-control" id="commentPasswordInput" name="password" placeholder="비밀번호를 입력하세요." required>
+                </div>
+                <textarea
+                        class="form-control"
+                        name="content"
+                        cols="6"
+                        placeholder="댓글 작성하기"
+                ></textarea>
+                <button class="btn btn-primary" style="background-color: #2a8cc7; --bs-btn-border-color: #2a8cc7;">업로드</button>
+            </div>
+        </form>
+
+        <div class="position-absolute top-0 end-0 mt-4 me-4">
+            <button
+                    class="btn btn-light lh-1 p-0 px-2 dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+            >
+                <span class="material-symbols-outlined"> ⁝ </span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <button class="dropdown-item d-flex align-items-center gap-2"
+                            th:attr="onclick=|openPasswordModal(${post.id});|">
+                        <span class="material-symbols-outlined"> edit </span>수정
+                    </button>
+                </li>
+                <li>
+                    <button
+                            class="dropdown-item text-danger btn btn-danger d-flex align-items-center gap-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deletePostModal"
+                            th:onclick="handleDeletePostButton(event, [[${post.id}]], [[${post.board.id}]]);"
+                    >
+                        <span class="material-symbols-outlined"> delete </span>삭제
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="editPostModal" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPostModalLabel">게시글 수정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPostForm">
+                    <div class="mb-3">
+                        <label for="editPostPasswordInput" class="form-label">비밀번호 입력</label>
+                        <input type="password" class="form-control" id="editPostPasswordInput" name="password" placeholder="비밀번호를 입력하세요." required>
+                    </div>
+                    <input type="hidden" id="postIdForEdit" name="postId">
+                    <button type="submit" class="btn btn-primary">확인</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal();">
+                        취소
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div
+        class="modal fade"
+        id="deletePostModal"
+        tabindex="-1"
+        aria-labelledby="deletePostModalLabel"
+        aria-hidden="true"
+>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="deletePostModalLabel">
+                    게시글을 삭제하시겠습니까?
+                </h1>
+                <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <p class="fw-light">게시글과 댓글이 삭제됩니다.</p>
+                <input id="password" type="password" name="password" placeholder="비밀번호를 입력하세요." required>
+            </div>
+            <div class="modal-footer">
+                <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                >
+                    취소
+                </button>
+
+                <button type="button"
+                        class="btn btn-danger"
+                        onclick="handleDeletePostModalButton()"
+                >
+                    삭제
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div
+        class="modal fade"
+        id="editCommentModal"
+        tabindex="-1"
+        aria-labelledby="editCommentModalLabel"
+        aria-hidden="true"
+>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="editCommentModalLabel">
+                    댓글 수정하기
+                </h1>
+                <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                ></button>
+            </div>
+            <form id="commentEditForm" method="POST">
+                <div class="modal-body">
+              <textarea
+                      class="form-control"
+                      name="content"
+                      id="commentContentTextarea"
+                      placeholder="댓글 수정하기..."
+              ></textarea>
+                 <input type="password" class="form-control mt-2" id="editCommentPasswordInput" placeholder="비밀번호를 입력하세요." required>
+                </div>
+                <div class="modal-footer">
+                    <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                    >
+                        취소
+                    </button>
+                    <button class="btn btn-primary" th:onclick="handleEditCommentSubmit()">수정</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div
+        class="modal fade"
+        id="deleteCommentModal"
+        tabindex="-1"
+        aria-labelledby="deleteCommentModalLabel"
+        aria-hidden="true"
+>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="deleteCommentModalLabel">
+                    댓글을 삭제하시겠습니까?
+                </h1>
+
+                <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <p class="fw-light">해당 댓글이 삭제됩니다.</p>
+                <input type="password" class="form-control" id="deleteCommentPasswordInput" placeholder="비밀번호를 입력하세요." required>
+            </div>
+            <div class="modal-footer">
+                <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                >
+                    취소
+                </button>
+                <button
+                        type="button"
+                        class="btn btn-danger"
+                        onclick="handleDeleteCommentModalButton()"
+                >
+                    삭제
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 부트스트랩 JS 추가 -->
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"
+></script>
+<script th:inline="javascript">
+
+    //게시글 삭제
+    document.getElementById('deletePostModal').addEventListener('hide.bs.modal', function () {
+  document.getElementById('password').value = ''; // 비밀번호 입력 필드 초기화
+});
+    let currentPost;
+    let currentBoard;
+    let currentComment;
+    let elementToDelete;
+
+    function handleDeletePostButton(e, postId, boardId) {
+      event.preventDefault();
+      currentPost = postId;
+      currentBoard = boardId;
+    }
+
+    function handleDeletePostModalButton() {
+     const password = document.getElementById('password').value;
+
+     if (!password) {
+      alert('비밀번호를 입력해주세요.');
+      return;
+      }
+
+      fetch(`/posts/${currentPost}`, {
+          method: "DELETE",
+          headers: {
+          'Content-Type': 'application/json'  // JSON
+      },
+      body: JSON.stringify({ password: password })
+      }).then(response => {
+      if (response.ok) {
+      window.location.href = `/boards/${currentBoard}`;
+      } else {
+        alert('잘못된 비밀번호입니다.');
+      }
+      }).catch(error => {
+          alert('Error deleting post.');
+      });
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById("deletePostModal"));
+      modal.hide();
+      }
+
+
+//댓글 생성
+        document.addEventListener('DOMContentLoaded', function() {
+            const commentForm = document.querySelector('form[method="POST"]');
+            commentForm.addEventListener('submit', function(event) {
+                const passwordInput = document.getElementById('commentPasswordInput').value;
+                if (passwordInput.value.length < 4) {  // 비밀번호 길이를 4자 이상으로 제한
+                    alert('비밀번호는 4자 이상이어야 합니다.');
+                    event.preventDefault();  // 폼 제출을 막음
+                }
+            });
+        });
+
+      document.getElementById('deleteCommentModal').addEventListener('hide.bs.modal', function () {
+      document.getElementById('deleteCommentPasswordInput').value = ''; // 수정 시 비밀번호 입력 필드 초기화
+    });
+
+
+//댓글 수정
+
+document.getElementById('editCommentModal').addEventListener('hide.bs.modal', function () {
+    document.getElementById('editCommentPasswordInput').value = '';  // 비밀번호 입력 필드 초기화
+    removeModalBackdrop();
+});
+
+function removeModalBackdrop() {
+    // 모달 백그라운드 오버레이 제거
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => {
+        backdrop.remove();
+    });
+}
+
+function handleEditCommentButton(event, commentId, content) {
+    event.preventDefault();
+    currentComment = commentId;
+    document.getElementById("commentContentTextarea").value = content; // 텍스트 영역에 댓글 내용 설정
+
+    var editModal = new bootstrap.Modal(document.getElementById('editCommentModal')); // 여기서 모달 인스턴스 생성
+    editModal.show(); // 모달 표시
+}
+
+function handleEditCommentSubmit() {
+    const content = document.getElementById('commentContentTextarea').value;
+    const password = document.getElementById('editCommentPasswordInput').value;
+
+    fetch(`/comments/update/${currentComment}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ content: content, password: password })
+    }).then(response => {
+        if (response.ok) {
+            window.location.reload(); // 페이지 새로고침
+        } else {
+           alert('비밀번호가 올바르지 않습니다.');  // 오류 메시지 출력
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+        alert('서버 오류가 발생했습니다');
+    });
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById("editCommentModal"));
+    modal.hide();
+}
+// 댓글 삭제
+
+function handleDeleteCommentButton(e, commentId) {
+    currentComment = commentId;
+    elementToDelete = e.target.closest(".card");  // 삭제할 댓글 요소 찾기
+}
+
+function handleDeleteCommentModalButton() {
+    const password = document.getElementById('deleteCommentPasswordInput').value;  // 비밀번호 입력 필드 값 가져오기
+
+    fetch(`/comments/delete/${currentComment}`, {
+        method: "DELETE",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ password: password })  // 비밀번호 포함
+    }).then(response => {
+        if (response.ok) {
+            elementToDelete.remove();  // 댓글 요소 삭제
+            const commentsCount = document.getElementById("commentsCount");
+            commentsCount.innerText = parseInt(commentsCount.innerText) - 1;  // 댓글 수 감소
+        } else {
+             alert('비밀번호가 올바르지 않습니다.');  // 오류 메시지 출력
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+        alert('서버 오류가 발생했습니다.');
+    });
+
+    // 모달 닫기
+    const modal = bootstrap.Modal.getInstance(document.getElementById("deleteCommentModal"));
+    modal.hide();
+}
+
+
+
+
+//게시글 수정
+
+    // 게시글 수정 모달 열기
+    function openPasswordModal(postId) {
+        document.getElementById('postIdForEdit').value = postId;
+        var editPostModal = new bootstrap.Modal(document.getElementById('editPostModal'));
+        editPostModal.show();
+    }
+
+    //게시글 수정 모달 취소
+    function closeEditModal() {
+    var editModalElement = document.getElementById('editPostModal');
+    var editModal = bootstrap.Modal.getInstance(editModalElement);  // 모달 인스턴스 가져옴
+
+    if (editModal) {
+        editModal.hide();  // 모달 닫기
+    } else {
+        console.error('Edit modal instance not found');  // 모달 인스턴스를 찾지 못할 시 오류출력
+    }
+}
+
+    document.getElementById('editPostModal').addEventListener('hide.bs.modal', function () {
+    document.getElementById('editPostPasswordInput').value = '';  // 비밀번호 입력 필드 초기화
+});
+
+    // 게시글 수정 폼 제출
+    document.getElementById('editPostForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const postId = document.getElementById('postIdForEdit').value;
+    const password = document.getElementById('editPostPasswordInput').value;
+
+    // 비밀번호와 게시글 id를 서버로 전송
+    fetch(`/posts/${postId}/edit`, {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ postId: postId, password: password })
+    }).then(response => {
+        if (response.ok) {
+        window.location.href = `/posts/${postId}/edit`;
+    } else {
+        alert('비밀번호가 올바르지 않습니다.');
+    }
+    }).catch(error => {
+        console.error('Error:', error);
+    });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+    const displayStars = document.getElementById('displayStars');
+    const ratedValue = displayStars.getAttribute('data-rated');
+    const ratedStars = parseInt(ratedValue, 10);
+
+     if (isNaN(ratedStars)) {
+            console.error("Invalid ratedStars value:", ratedValue);
+        } else {
+            for (let i = 1; i <= 5; i++) {
+                const starSpan = document.createElement('span');
+                starSpan.innerHTML = '&#9733;';
+                starSpan.style.color = i <= ratedStars ? 'gold' : 'gray';
+                displayStars.appendChild(starSpan);
+            }
+        }
+});
+
+</script>
+
+
+</body>
+</html>
