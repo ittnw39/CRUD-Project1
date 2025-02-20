@@ -1,22 +1,18 @@
 package com.elice.boardproject.security.jwt;
 
+import com.elice.boardproject.user.entity.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -30,35 +26,49 @@ public class JwtTokenProvider {
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds,
             @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityInSeconds) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        byte[] keyBytes = secret.getBytes();
+        this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenValidityInMilliseconds = accessTokenValidityInSeconds * 1000;
         this.refreshTokenValidityInMilliseconds = refreshTokenValidityInSeconds * 1000;
     }
 
-    public String createAccessToken(Authentication authentication) {
-        String authorities = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
+    public String createToken(String email, Role role) {
+        Claims claims = Jwts.claims().setSubject(email);
+        claims.put("role", role.name());
 
-        long now = (new Date()).getTime();
-        Date validity = new Date(now + this.accessTokenValidityInMilliseconds);
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(validity)
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    public String createAccessToken(Authentication authentication) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
 
         return Jwts.builder()
                 .setSubject(authentication.getName())
-                .claim("auth", authorities)
-                .signWith(key, SignatureAlgorithm.HS512)
+                .claim("auth", authentication.getAuthorities().iterator().next().getAuthority())
+                .setIssuedAt(now)
                 .setExpiration(validity)
+                .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
 
     public String createRefreshToken(Authentication authentication) {
-        long now = (new Date()).getTime();
-        Date validity = new Date(now + this.refreshTokenValidityInMilliseconds);
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
 
         return Jwts.builder()
                 .setSubject(authentication.getName())
-                .signWith(key, SignatureAlgorithm.HS512)
+                .setIssuedAt(now)
                 .setExpiration(validity)
+                .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
 
@@ -69,19 +79,22 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token)
                 .getBody();
 
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get("auth").toString().split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+        String role = claims.get("role", String.class);
+        if (role == null) {
+            role = claims.get("auth", String.class);
+        }
 
-        UserDetails principal = new User(claims.getSubject(), "", authorities);
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role.startsWith("ROLE_") ? role : "ROLE_" + role);
 
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        return new UsernamePasswordAuthenticationToken(claims.getSubject(), "", Collections.singleton(authority));
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             log.info("Invalid JWT token: {}", e.getMessage());

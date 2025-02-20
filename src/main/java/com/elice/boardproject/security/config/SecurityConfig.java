@@ -1,7 +1,8 @@
 package com.elice.boardproject.security.config;
 
 import com.elice.boardproject.security.jwt.JwtFilter;
-import com.elice.boardproject.security.jwt.JwtTokenProvider;
+import com.elice.boardproject.security.oauth2.CustomOAuth2UserService;
+import com.elice.boardproject.security.oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,24 +19,38 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtTokenProvider tokenProvider;
+    private final JwtFilter jwtFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/cosmetics/**").permitAll()
-                .requestMatchers("/api/boards/**").authenticated()
-                .requestMatchers("/api/posts/**").authenticated()
-                .requestMatchers("/api/comments/**").authenticated()
-                .anyRequest().authenticated()
+                .requestMatchers("/api/users/signup", "/api/users/login", "/api/users/logout").permitAll()
+                .requestMatchers("/api/users/**").authenticated()
+                .anyRequest().permitAll()
             )
-            .addFilterBefore(new JwtFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class);
+            .oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfo -> 
+                    userInfo.userService(customOAuth2UserService)
+                )
+                .successHandler(oAuth2SuccessHandler)
+            )
+            .logout(logout -> logout
+                .logoutUrl("/api/users/logout")
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    response.setStatus(200);
+                })
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID")
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -133,19 +133,34 @@ src
 
 1. 저장소 클론
 ```bash
-git clone https://github.com/yourusername/GlowGallery.git
+git clone https://github.com/ittnw39/CRUD-Project1.git
 ```
 
 2. 환경변수 설정
+다음 환경변수들을 설정해야 합니다:
 ```properties
+# Database Configuration
 DB_URL=jdbc:mysql://localhost:3306/glowgallery
 DB_USERNAME=your_username
 DB_PASSWORD=your_password
+
+# API Configuration
+COSMETIC_API_BASE_URL=api_url
 COSMETIC_API_KEY=your_api_key
+
+# Security Configuration
 JWT_SECRET=your_jwt_secret
 ```
+
+환경변수 설정 방법:
+- IDE(IntelliJ)에서 실행 시: Run/Debug Configurations에서 환경변수 설정
+- 서버 배포 시: 서버의 환경변수로 설정
+- 로컬 개발 시: application-local.yml 파일 생성 (gitignore에 포함됨)
 
 3. 프로젝트 실행
 ```bash
 ./gradlew bootRun
-``` 
+```
+
+4. 접속
+- 웹 브라우저에서 http://localhost:8080 접속 
