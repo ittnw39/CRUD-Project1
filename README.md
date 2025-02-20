@@ -20,9 +20,16 @@
   <img src="screenshots/review.png" alt="리뷰 시스템 데모" width="800"/>
 </div>
 
-- 별점 평가 시스템
+- 별점 평가 시스템 (1-5점)
+  - 화장품별 평균 별점
+  - 별점 분포 통계
+  - 전체 리뷰 수 집계
 - 상세한 리뷰 작성 기능
-- 댓글을 통한 사용자 간 소통
+  - 리뷰 내용 작성 (최대 1000자)
+  - 한 화장품당 한 개의 리뷰만 작성 가능
+- 리뷰 관리 기능
+  - 자신의 리뷰 조회/수정/삭제
+  - 화장품별 리뷰 목록 조회
 
 ### 3. 화장품 정보
 <div align="center">
@@ -124,6 +131,15 @@ src
 - POST /api/posts - 게시글 작성
 - PUT /api/posts/{id} - 게시글 수정
 - DELETE /api/posts/{id} - 게시글 삭제
+
+### 리뷰 관련 (/api/reviews/**)
+- POST /api/reviews - 리뷰 작성
+- GET /api/reviews/{reviewId} - 리뷰 상세 조회
+- GET /api/reviews/cosmetic/{cosmeticId} - 화장품별 리뷰 목록
+- GET /api/reviews/my - 내 리뷰 목록
+- PUT /api/reviews/{reviewId} - 리뷰 수정
+- DELETE /api/reviews/{reviewId} - 리뷰 삭제
+- GET /api/reviews/cosmetic/{cosmeticId}/stats - 화장품 별점 통계
 
 </details>
 

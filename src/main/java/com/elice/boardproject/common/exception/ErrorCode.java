@@ -26,6 +26,14 @@ public enum ErrorCode {
     NOT_BOARD_OWNER(HttpStatus.FORBIDDEN, "게시판의 소유자가 아닙니다."),
     NOT_POST_OWNER(HttpStatus.FORBIDDEN, "게시글의 작성자가 아닙니다."),
     NOT_COMMENT_OWNER(HttpStatus.FORBIDDEN, "댓글의 작성자가 아닙니다."),
+
+    // 화장품 관련 에러
+    COSMETIC_NOT_FOUND(HttpStatus.NOT_FOUND, "화장품을 찾을 수 없습니다."),
+
+    // 리뷰 관련 에러
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
+    NOT_REVIEW_OWNER(HttpStatus.FORBIDDEN, "리뷰의 작성자가 아닙니다."),
+    DUPLICATE_REVIEW(HttpStatus.CONFLICT, "이미 해당 화장품에 대한 리뷰를 작성했습니다."),
     
     // 서버 에러
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 에러가 발생했습니다.");

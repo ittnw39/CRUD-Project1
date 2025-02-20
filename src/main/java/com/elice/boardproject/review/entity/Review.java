@@ -4,8 +4,11 @@ import com.elice.boardproject.comment.entity.Comment;
 import com.elice.boardproject.cosmetic.entity.Cosmetic;
 import com.elice.boardproject.user.entity.User;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +17,9 @@ import java.util.List;
 @Table(name = "reviews", 
        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "cosmetic_id"}))
 @Getter
-@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,9 +40,12 @@ public class Review {
     private String content;  // 리뷰 내용
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 
     @PrePersist
@@ -49,5 +57,13 @@ public class Review {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
+
+    public void updateRating(int rating) {
+        this.rating = rating;
     }
 } 
