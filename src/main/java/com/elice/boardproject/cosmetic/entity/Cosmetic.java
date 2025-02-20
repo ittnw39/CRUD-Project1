@@ -18,29 +18,40 @@ public class Cosmetic {
     private Long id;
 
     @Column(nullable = false)
-    private String productName;  // PRDUCT
+    private String cosmeticReportSeq;    // 화장품보고일련번호 (COSMETIC_REPORT_SEQ)
 
     @Column(nullable = false)
-    private String manufacturer; // BSSH_NM
+    private String itemName;             // 품목명 (ITEM_NAME)
 
-    private String industry;    // INDUTY
+    @Column(nullable = false)
+    private String reportFlagName;       // 화장품보고구분명 (REPORT_FLAG_NAME)
 
-    private LocalDateTime reportDate; // PRMS_DT
+    private String itemPh;               // 품목PH (ITEM_PH)
 
-    private String expirationPeriod; // DISTB_PD
+    private String cosmeticStdName;      // 화장품기준명 (COSMETIC_STD_NAME)
 
-    private String usagePeriod;     // POG_DAYCNT
+    @Column(nullable = false)
+    private String entpName;             // 업소명 (ENTP_NAME)
 
-    private String storageMethod;   // CSTDY_METHD
+    private LocalDateTime reportDate;     // 보고일자 (REPORT_DATE)
 
-    @Column(length = 1000)
-    private String precautions;     // IFTKN_ATNT_MATR_CN
+    private String cancelApprovalYn;     // 취하승인여부 (CANCEL_APPROVAL_YN)
 
-    private String standards;       // STDR_STND
+    private String ethanolOverYn;        // 에탄올4%초과여부 (ETHANOL_OVER_YN)
 
-    private String licenseNumber;   // LCNS_NO
+    private String spf;                  // 자외선차단지수 (SPF)
 
-    private String reportNumber;    // PRDLST_REPORT_NO
+    private String pa;                   // 자외선차단지수PA (PA)
+
+    private String usageDosage;          // 용법용량 (USAGE_DOSAGE)
+
+    private String effectYn1;            // 2호효능효과_미백 (EFFECT_YN1)
+
+    private String effectYn2;            // 2호효능효과_주름개선 (EFFECT_YN2)
+
+    private String effectYn3;            // 2호효능효과_자외선 (EFFECT_YN3)
+
+    private String waterProofingName;    // 2호효능효과_자외선_내수성 (WATER_PROOFING_NAME)
 
     @OneToMany(mappedBy = "cosmetic", cascade = CascadeType.ALL)
     private List<Review> reviews = new ArrayList<>();
