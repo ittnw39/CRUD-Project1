@@ -97,5 +97,41 @@ public class CosmeticListResponse {
         @XmlElement(name = "REPORT_DATE")
         @JacksonXmlProperty(localName = "REPORT_DATE")
         private String reportDate;           // 보고일자
+
+        @XmlElement(name = "SPF")
+        @JacksonXmlProperty(localName = "SPF")
+        private String spf;                  // 자외선차단지수(SPF)
+
+        @XmlElement(name = "PA")
+        @JacksonXmlProperty(localName = "PA")
+        private String pa;                   // 자외선차단지수(PA)
+
+        @XmlElement(name = "USAGE_DOSAGE")
+        @JacksonXmlProperty(localName = "USAGE_DOSAGE")
+        private String usageDosage;          // 용법용량
+
+        @XmlElement(name = "EFFECT_YN1")
+        @JacksonXmlProperty(localName = "EFFECT_YN1")
+        private String effectYn1;            // 2호효능효과_미백
+
+        @XmlElement(name = "EFFECT_YN2")
+        @JacksonXmlProperty(localName = "EFFECT_YN2")
+        private String effectYn2;            // 2호효능효과_주름개선
+
+        @XmlElement(name = "EFFECT_YN3")
+        @JacksonXmlProperty(localName = "EFFECT_YN3")
+        private String effectYn3;            // 2호효능효과_자외선
+
+        @XmlElement(name = "WATER_PROOFING_NAME")
+        @JacksonXmlProperty(localName = "WATER_PROOFING_NAME")
+        private String waterProofingName;    // 2호효능효과_자외선_내수성
+
+        @XmlElement(name = "CANCEL_APPROVAL_YN")
+        @JacksonXmlProperty(localName = "CANCEL_APPROVAL_YN")
+        private String cancelApprovalYn;     // 취하승인여부
+
+        @XmlElement(name = "ETHANOL_OVER_YN")
+        @JacksonXmlProperty(localName = "ETHANOL_OVER_YN")
+        private String ethanolOverYn;        // 에탄올4%초과여부
     }
 } 

@@ -11,87 +11,44 @@ java {
 	sourceCompatibility = '17'
 }
 
-// 파일 잠금 문제 해결을 위한 설정
-tasks.withType(JavaCompile) {
-	options.fork = true
-	options.forkOptions.jvmArgs = ['-Xmx1024m']
-}
-
-// 클린 태스크 개선
-clean {
-	delete "${projectDir}/build"
-	delete "${projectDir}/out"
-}
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-}
-
 repositories {
 	mavenCentral()
-}
-
-ext {
-	springBootVersion = '3.2.0'
-	jacksonVersion = '2.15.3'
-}
-
-springBoot {
-    mainClass = 'com.elice.boardproject.BoardprojectApplication'
 }
 
 dependencies {
 	// Spring Boot Starters
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
-	implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
-	implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${springBootVersion}"
-	
-	// Security
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-	
-	// Servlet
-	implementation 'javax.servlet:javax.servlet-api:4.0.1'
-	
-	// JAXB
-	implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
-	implementation 'org.glassfish.jaxb:jaxb-runtime:4.0.2'
-	
-	// Jackson
-	implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
-	implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
-	implementation "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
-	implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jacksonVersion}"
-	
-	// Reactor
-	implementation 'io.projectreactor:reactor-core:3.4.34'
-	implementation 'io.projectreactor.netty:reactor-netty:1.0.34'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	
 	// Database
-	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	
-	// MapStruct
-	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+	
+	// XML Processing
+	implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
+	implementation 'org.glassfish.jaxb:jaxb-runtime:4.0.2'
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	
+	// Reactor
+	implementation 'io.projectreactor:reactor-core:3.5.11'
+	implementation 'io.projectreactor.netty:reactor-netty:1.1.13'
 	
 	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
-	
-	// Jackson JSR310
-	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 }
 
 tasks.named('test') {

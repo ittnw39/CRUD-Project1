@@ -6,10 +6,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
 @EnableJpaAuditing
-public class BoardprojectApplication {
+public class BoardProjectApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BoardprojectApplication.class, args);
+		SpringApplication.run(BoardProjectApplication.class, args);
 	}
 
 }

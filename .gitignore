@@ -49,3 +49,22 @@ out/
 
 ### Mac OS ###
 .DS_Store
+
+### Frontend ###
+node_modules/
+/src/main/resources/frontend/node_modules/
+/src/main/resources/frontend/build/
+/src/main/resources/frontend/.pnp
+/src/main/resources/frontend/.pnp.js
+/src/main/resources/frontend/coverage/
+/src/main/resources/frontend/.DS_Store
+/src/main/resources/frontend/.env.local
+/src/main/resources/frontend/.env.development.local
+/src/main/resources/frontend/.env.test.local
+/src/main/resources/frontend/.env.production.local
+/src/main/resources/frontend/npm-debug.log*
+/src/main/resources/frontend/yarn-debug.log*
+/src/main/resources/frontend/yarn-error.log*
+
+### Uploads ###
+uploads/

@@ -1,6 +1,6 @@
 package com.elice.boardproject.user.entity;
 
-import com.elice.boardproject.review.entity.Review;
+import com.elice.boardproject.post.entity.Post;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -21,6 +21,7 @@ import java.util.List;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
 
     @Column(nullable = false, unique = true)
@@ -49,15 +50,16 @@ public class User {
     @Column
     private String refreshToken;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user")
     @Builder.Default
-    private List<Review> reviews = new ArrayList<>();
+    private List<Post> posts = new ArrayList<>();
 
     @CreatedDate
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @PrePersist

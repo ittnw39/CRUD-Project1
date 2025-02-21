@@ -1,6 +1,6 @@
 package com.elice.boardproject.cosmetic.entity;
 
-import com.elice.boardproject.review.entity.Review;
+import com.elice.boardproject.post.entity.Post;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +15,7 @@ import java.util.List;
 public class Cosmetic {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "cosmetic_id")
     private Long id;
 
     @Column(nullable = false)
@@ -53,10 +54,13 @@ public class Cosmetic {
 
     private String waterProofingName;    // 2호효능효과_자외선_내수성 (WATER_PROOFING_NAME)
 
-    @OneToMany(mappedBy = "cosmetic", cascade = CascadeType.ALL)
-    private List<Review> reviews = new ArrayList<>();
+    @OneToMany(mappedBy = "cosmetic")
+    private List<Post> posts = new ArrayList<>();
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @PrePersist
