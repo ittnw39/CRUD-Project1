@@ -27,9 +27,11 @@
 - 상세한 리뷰 작성 기능
   - 리뷰 내용 작성 (최대 1000자)
   - 한 화장품당 한 개의 리뷰만 작성 가능
+  - 리뷰당 여러 장의 이미지 첨부 가능
 - 리뷰 관리 기능
   - 자신의 리뷰 조회/수정/삭제
   - 화장품별 리뷰 목록 조회
+  - 리뷰 이미지 관리 (추가/삭제)
 
 ### 3. 화장품 정보
 <div align="center">
@@ -69,13 +71,19 @@
 
 ### ⭐ 리뷰 시스템
 - 화장품 리뷰 작성 및 평점 부여
-- 사진 첨부 기능
+- 리뷰당 다중 이미지 업로드 기능
 - 리뷰 추천 시스템
+- 리뷰 이미지 관리 (추가/수정/삭제)
 
 ### 🗨️ 커뮤니티
 - 카테고리별 게시판
 - 댓글 시스템
 - 게시글 태그 기능
+  - 게시글 작성/수정 시 #태그 추가 가능
+  - 태그를 통한 게시글 분류 및 검색
+  - 동일 태그를 가진 게시글 모아보기
+  - 태그 클릭 시 해당 태그가 포함된 게시글 목록 표시
+- 사용자 탈퇴 후에도 게시글 및 리뷰 보존
 
 ### 👤 사용자 관리
 - JWT 기반 인증
@@ -85,25 +93,22 @@
 ---
 
 ## 프로젝트 구조
-
 ```
 src
 ├── main
-│   ├── java
-│   │   └── com.elice.boardproject
-│   │       ├── board
-│   │       ├── comment
-│   │       ├── cosmetic
-│   │       ├── post
-│   │       ├── review
-│   │       ├── security
-│   │       └── user
+│   ├── java/com/elice/boardproject
+│   │   ├── board          # 게시판 관련 기능
+│   │   ├── comment        # 댓글 관련 기능
+│   │   ├── common         # 공통 유틸리티, 설정
+│   │   ├── cosmetic       # 화장품 정보 관련 기능
+│   │   ├── post           # 게시글 관련 기능
+│   │   ├── security       # 보안 및 인증 관련
+│   │   ├── tag           # 태그 관련 기능
+│   │   └── user          # 사용자 관련 기능
 │   └── resources
-│       ├── static
-│       └── templates
-└── test
-    └── java
-        └── com.elice.boardproject
+│       ├── frontend      # React 프론트엔드
+│       └── application.yml
+└── test                  # 테스트 코드
 ```
 
 ---
@@ -115,33 +120,124 @@ src
 <details>
 <summary><b>📥 API 엔드포인트 상세 보기</b></summary>
 
-### 인증 관련 (/api/auth/**)
-- POST /api/auth/signup - 회원가입
-- POST /api/auth/login - 로그인
-- POST /api/auth/refresh - 토큰 갱신
+### 사용자 관련 (/api/users/**)
+- POST /api/users/signup - 회원가입
+- POST /api/users/login - 로그인
+- GET /api/users/me - 내 정보 조회
+- PUT /api/users/password - 비밀번호 변경
+- PUT /api/users/profile - 프로필 정보 수정
+- POST /api/users/refresh - 토큰 갱신
+- POST /api/users/logout - 로그아웃
 
 ### 게시판 관련 (/api/boards/**)
-- GET /api/boards - 게시판 목록
-- POST /api/boards - 게시판 생성
-- PUT /api/boards/{id} - 게시판 수정
-- DELETE /api/boards/{id} - 게시판 삭제
+- GET / - 게시판 목록 조회
+- GET /{id} - 게시판 상세 조회
+- POST / - 게시판 생성 (관리자)
+- PUT /{id} - 게시판 수정 (관리자)
+- DELETE /{id} - 게시판 삭제 (관리자)
 
 ### 게시글 관련 (/api/posts/**)
-- GET /api/posts - 게시글 목록
-- POST /api/posts - 게시글 작성
-- PUT /api/posts/{id} - 게시글 수정
-- DELETE /api/posts/{id} - 게시글 삭제
+- GET / - 게시글 목록 조회 (페이징)
+- GET /{id} - 게시글 상세 조회
+- POST / - 게시글 작성
+- PUT /{id} - 게시글 수정
+- DELETE /{id} - 게시글 삭제
 
-### 리뷰 관련 (/api/reviews/**)
-- POST /api/reviews - 리뷰 작성
-- GET /api/reviews/{reviewId} - 리뷰 상세 조회
-- GET /api/reviews/cosmetic/{cosmeticId} - 화장품별 리뷰 목록
-- GET /api/reviews/my - 내 리뷰 목록
-- PUT /api/reviews/{reviewId} - 리뷰 수정
-- DELETE /api/reviews/{reviewId} - 리뷰 삭제
-- GET /api/reviews/cosmetic/{cosmeticId}/stats - 화장품 별점 통계
+### 댓글 관련 (/api/comments/**)
+- GET /post/{postId} - 게시글 댓글 목록
+- POST / - 댓글 작성
+- PUT /{id} - 댓글 수정
+- DELETE /{id} - 댓글 삭제
+
+### 화장품 관련 (/api/cosmetics/**)
+- GET /api/cosmetics/list - 화장품 목록 조회 (페이징)
+  - pageNo: 페이지 번호 (기본값: 1)
+  - numOfRows: 페이지당 항목 수 (기본값: 10)
+- GET /api/cosmetics/search - 화장품 검색
+  - item_name: 검색할 제품명
+  - pageNo: 페이지 번호 (기본값: 1)
+  - numOfRows: 페이지당 항목 수 (기본값: 10)
+
+### 태그 관련 (/api/tags/**)
+- GET /api/tags - 전체 태그 목록
+- GET /api/tags/popular - 인기 태그 목록
+- GET /api/tags/search - 태그 검색
 
 </details>
+
+---
+
+## 데이터베이스 구조
+
+### 엔티티 관계도
+```
+User (사용자)
+├── 1:N Post (게시글)
+└── 1:N Comment (댓글)
+
+Board (게시판)
+└── 1:N Post (게시글)
+
+Cosmetic (화장품)
+└── 1:N Post (게시글)
+
+Post (게시글)
+├── N:1 Board (게시판)
+├── N:1 User (작성자)
+├── N:1 Cosmetic (화장품)
+├── 1:N PostImage (이미지)
+├── 1:N Comment (댓글)
+└── N:M Tag (해시태그)
+
+Comment (댓글)
+├── N:1 Post (게시글)
+├── N:1 User (작성자)
+├── N:1 Comment (부모 댓글)
+└── 1:N Comment (답글)
+
+Tag (해시태그)
+└── N:M Post (게시글)
+```
+
+### 삭제 정책
+1. 사용자(User) 삭제 시
+   - 게시글(Post) 보존
+   - 댓글(Comment) 보존
+   - RefreshToken 삭제
+
+2. 게시판(Board) 삭제 시
+   - 연관된 게시글(Post) 모두 삭제
+   - 게시글 댓글(Comment) 자동 삭제
+   - 게시글-태그 관계 자동 삭제
+
+3. 게시글(Post) 삭제 시
+   - 게시글 이미지(PostImage) 자동 삭제
+   - 게시글 댓글(Comment) 자동 삭제
+   - 게시글-태그 관계 자동 삭제 (태그 자체는 보존)
+
+4. 댓글(Comment) 삭제 시
+   - 실제 삭제가 아닌 soft delete 처리
+   - deleted 필드를 true로 설정
+   - content를 "삭제된 댓글입니다."로 변경
+
+5. 화장품(Cosmetic) 삭제 시
+   - 연관된 리뷰(Post)는 보존됨
+   - Post 엔티티의 cosmetic 필드가 null로 설정됨
+   - 리뷰의 화장품 정보는 cosmeticName 필드로 보존
+   - 삭제된 화장품에 대한 새로운 리뷰 작성 불가
+
+### 파일 저장소
+- 리뷰 이미지: 로컬 파일 시스템의 'uploads' 디렉토리에 저장
+- 이미지 파일명: UUID를 사용하여 고유한 파일명 생성
+- 허용되는 파일 형식: jpg, jpeg, png, gif
+- 파일 크기 제한: 
+  - 단일 파일 최대 10MB
+  - 요청당 최대 50MB
+- 보안 기능:
+  - 파일 확장자 검증
+  - 디렉토리 트래버설 공격 방지
+  - 파일명 정리(cleaning)를 통한 악성 문자 제거
+  - 업로드 디렉토리 자동 생성
 
 ---
 
@@ -153,6 +249,7 @@ git clone https://github.com/ittnw39/CRUD-Project1.git
 ```
 
 2. 환경변수 설정
+
 다음 환경변수들을 설정해야 합니다:
 ```properties
 # Database Configuration
