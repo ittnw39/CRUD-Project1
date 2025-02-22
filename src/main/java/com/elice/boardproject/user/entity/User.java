@@ -1,6 +1,7 @@
 package com.elice.boardproject.user.entity;
 
 import com.elice.boardproject.post.entity.Post;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -52,6 +53,7 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     @Builder.Default
+    @JsonManagedReference
     private List<Post> posts = new ArrayList<>();
 
     @CreatedDate

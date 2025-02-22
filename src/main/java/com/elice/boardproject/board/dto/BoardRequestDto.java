@@ -1,6 +1,6 @@
 package com.elice.boardproject.board.dto;
 
-import com.elice.boardproject.board.entity.CosmeticCategory;
+import com.elice.boardproject.board.entity.BoardCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -18,6 +18,6 @@ public class BoardRequestDto {
     @Size(max = 500, message = "게시판 설명은 500자 이하여야 합니다")
     private String description;
 
-    @NotNull(message = "화장품 카테고리는 필수입니다")
-    private CosmeticCategory category;
+    @NotNull(message = "게시판 카테고리는 필수입니다")
+    private BoardCategory category;
 } 

@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import HomePage from './pages/home/HomePage';
 import BoardListPage from './pages/board/BoardListPage';
 import BoardDetailPage from './pages/board/BoardDetailPage';
-import BoardFormPage from './pages/board/BoardFormPage';
 import PostDetailPage from './pages/post/PostDetailPage';
 import PostFormPage from './pages/post/PostFormPage';
 import CosmeticListPage from './pages/cosmetic/CosmeticListPage';

@@ -1,140 +1,135 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  styled,
-  Grid
-} from '@mui/material';
+import { Box, Typography, Card, CardContent, CardMedia, Rating } from '@mui/material';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
+import { styled } from '@mui/system';
+import useCosmeticStore from '../../store/cosmeticStore';
 
-// 글로우 갤러리 로고 스타일
-const LogoText = styled(Typography)`
-  font-family: "Bagel Fat One", system-ui;
-  font-size: 80px;
-  color: aliceblue;
-  -webkit-text-stroke: 1px lightskyblue;
-  margin-top: 70px;
-  cursor: pointer;
-
-  & span {
-    display: inline-block;
-  }
-
-  & span.wave-animation {
-    animation: wave 0.6s ease-in-out infinite;
-  }
-
-  @keyframes wave {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-`;
-
-const StyledContainer = styled(Container)`
-  margin-top: 2rem !important;
-  border: 10px solid #a5dafb80;
-  border-radius: 50% 50% 20px 20px;
-  padding: 2rem;
-`;
-
-const SubTitle = styled(Typography)`
-  color: #71aadd;
-  font-size: 20px;
-  text-align: center;
-  font-family: "Jua", sans-serif;
-`;
-
-const StyledButton = styled(Button)`
-  background-color: #2a8cc7;
-  border-radius: 30px 30px 5px;
+const CosmeticCard = styled(Card)`
   margin: 10px;
-  font-family: "Jua", sans-serif;
+  max-width: 280px;
+  transition: transform 0.3s ease;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
   &:hover {
-    background-color: #1f7ab3;
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+`;
+
+const CardImageContainer = styled(Box)`
+  position: relative;
+  height: 120px;
+  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+`;
+
+const StyledRating = styled(Rating)`
+  .MuiRating-icon {
+    color: #ff69b4;
   }
 `;
 
 const HomePage = () => {
-  const navigate = useNavigate();
+  const { cosmetics, searchCosmetics, isLoading } = useCosmeticStore();
 
   useEffect(() => {
-    // 웨이브 애니메이션 효과
-    const textElement = document.getElementById('waveText');
-    if (textElement) {
-      const text = textElement.innerText;
-      const letters = text.split('').map((char, i) => 
-        `<span key={${i}}>${char}</span>`
-      ).join('');
-      textElement.innerHTML = letters;
+    searchCosmetics('');
+  }, [searchCosmetics]);
 
-      const spanLetters = textElement.querySelectorAll('span');
-      let isAnimating = false;
-      let timeouts = [];
-
-      textElement.addEventListener('mouseover', () => {
-        if (!isAnimating) {
-          isAnimating = true;
-          spanLetters.forEach((span, index) => {
-            const timeout = setTimeout(() => {
-              span.classList.add('wave-animation');
-            }, index * 150);
-            timeouts.push(timeout);
-          });
+  const sliderSettings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 3,
         }
-      });
+      },
+      {
+        breakpoint: 600,
+        settings: {
+          slidesToShow: 2,
+        }
+      }
+    ]
+  };
 
-      textElement.addEventListener('mouseout', () => {
-        timeouts.forEach(clearTimeout);
-        timeouts = [];
-        spanLetters.forEach(span => {
-          span.classList.remove('wave-animation');
-          isAnimating = false;
-        });
-      });
-    }
-  }, []);
+  if (isLoading) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography>로딩 중...</Typography>
+      </Box>
+    );
+  }
 
   return (
-    <StyledContainer maxWidth="lg">
-      <Box className="header mb-5">
-        <LogoText 
-          variant="h1" 
-          component="h1" 
-          align="center"
-          id="waveText"
-        >
-          Glow Gallery
-        </LogoText>
-        <SubTitle variant="h4">
-          스킨케어 정보공유 게시판
-        </SubTitle>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h5" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
+          인기 화장품
+        </Typography>
+        {cosmetics && cosmetics.length > 0 ? (
+          <Slider {...sliderSettings}>
+            {cosmetics.map((cosmetic) => (
+              <CosmeticCard key={cosmetic.id}>
+                <CardImageContainer>
+                  {cosmetic.firstReviewImage ? (
+                    <CardMedia
+                      component="img"
+                      height="120"
+                      image={cosmetic.firstReviewImage}
+                      alt={cosmetic.itemName}
+                      sx={{ objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      리뷰 이미지 없음
+                    </Typography>
+                  )}
+                </CardImageContainer>
+                <CardContent>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom noWrap>
+                    {cosmetic.entpName}
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }} noWrap>
+                    {cosmetic.itemName}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <StyledRating
+                      value={cosmetic.averageRating || 0}
+                      precision={0.5}
+                      size="small"
+                      readOnly
+                    />
+                    <Typography variant="body2" color="text.secondary">
+                      ({cosmetic.reviewCount})
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </CosmeticCard>
+            ))}
+          </Slider>
+        ) : (
+          <Typography variant="body1" color="text.secondary" align="center">
+            등록된 화장품이 없습니다.
+          </Typography>
+        )}
       </Box>
-      
-      <Grid container spacing={2} justifyContent="center" sx={{ mt: 4 }}>
-        <Grid item>
-          <StyledButton
-            variant="contained"
-            onClick={() => navigate('/boards')}
-          >
-            게시판 목록
-          </StyledButton>
-        </Grid>
-        <Grid item>
-          <StyledButton
-            variant="contained"
-            onClick={() => navigate('/cosmetics')}
-          >
-            화장품 목록
-          </StyledButton>
-        </Grid>
-      </Grid>
-    </StyledContainer>
+    </Box>
   );
 };
 

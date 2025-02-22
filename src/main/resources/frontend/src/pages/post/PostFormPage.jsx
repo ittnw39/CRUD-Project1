@@ -86,7 +86,8 @@ const PostFormPage = () => {
     isLoading: boardLoading,
     error: boardError,
     clearError: clearBoardError,
-    boards
+    boards,
+    fetchBoards
   } = useBoardStore();
 
   const {
@@ -108,6 +109,7 @@ const PostFormPage = () => {
   } = useCosmeticStore();
 
   useEffect(() => {
+    fetchBoards();
     if (boardId) {
       fetchBoard(boardId);
     }
@@ -117,7 +119,10 @@ const PostFormPage = () => {
     if (!cosmetics || cosmetics.length === 0) {
       fetchCosmetics();
     }
-  }, [boardId, postId, fetchBoard, fetchPost, fetchCosmetics, cosmetics]);
+    if (cosmeticId) {
+      setSelectedCosmetic(cosmeticId);
+    }
+  }, [boardId, postId, cosmeticId, fetchBoard, fetchPost, fetchCosmetics, cosmetics, fetchBoards]);
 
   useEffect(() => {
     if (postId && currentPost) {
@@ -170,17 +175,18 @@ const PostFormPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // boardId가 문자열로 전달되는 경우를 대비해 숫자로 변환
-    const numericBoardId = boardId ? parseInt(boardId, 10) : null;
-    const numericCosmeticId = selectedCosmetic ? parseInt(selectedCosmetic, 10) : null;
+    if (!selectedBoard) {
+      // TODO: 에러 처리
+      return;
+    }
     
     const postData = {
       title: formData.title,
       content: formData.content,
       rating: formData.rating,
       tags: formData.tags,
-      boardId: numericBoardId,
-      cosmeticId: numericCosmeticId,
+      boardId: parseInt(selectedBoard, 10),
+      cosmeticId: selectedCosmetic ? parseInt(selectedCosmetic, 10) : null,
       postType
     };
 
@@ -191,13 +197,7 @@ const PostFormPage = () => {
       : await createPost(postData, selectedImages);
 
     if (success) {
-      if (numericBoardId) {
-        navigate(`/boards/${numericBoardId}`);
-      } else if (numericCosmeticId) {
-        navigate(`/cosmetics/${numericCosmeticId}`);
-      } else {
-        navigate('/');
-      }
+      navigate(`/boards/${selectedBoard}`);
     }
   };
 

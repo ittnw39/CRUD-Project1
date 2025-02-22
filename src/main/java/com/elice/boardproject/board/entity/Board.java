@@ -5,6 +5,8 @@ import com.elice.boardproject.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,11 +27,11 @@ public class Board {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String name;  // 게시판 이름 (스킨케어, 메이크업, 바디케어 등)
+    private String name;  // 게시판 이름
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(20)")
     @Enumerated(EnumType.STRING)
-    private CosmeticCategory category;  // 화장품 카테고리
+    private BoardCategory category;  // 게시판 카테고리
 
     @Column(length = 500)
     private String description;  // 게시판 설명
@@ -40,6 +42,7 @@ public class Board {
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL)
     @Builder.Default
+    @JsonManagedReference
     private List<Post> posts = new ArrayList<>();
 
     @Column(name = "post_count")
@@ -48,6 +51,7 @@ public class Board {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
     private User user;  // 게시판 관리자
 
     @Column(name = "created_at", nullable = false, updatable = false)

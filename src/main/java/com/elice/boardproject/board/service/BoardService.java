@@ -2,7 +2,7 @@ package com.elice.boardproject.board.service;
 
 import com.elice.boardproject.board.dto.BoardRequestDto;
 import com.elice.boardproject.board.entity.Board;
-import com.elice.boardproject.board.entity.CosmeticCategory;
+import com.elice.boardproject.board.entity.BoardCategory;
 import com.elice.boardproject.board.repository.BoardRepository;
 import com.elice.boardproject.user.entity.User;
 import com.elice.boardproject.user.repository.UserRepository;
@@ -33,7 +33,7 @@ public class BoardService {
     }
 
     // 카테고리별 게시판 조회
-    public List<Board> findByCategory(CosmeticCategory category) {
+    public List<Board> findByCategory(BoardCategory category) {
         return boardRepository.findByCategory(category);
     }
 

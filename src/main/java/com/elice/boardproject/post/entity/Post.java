@@ -5,6 +5,7 @@ import com.elice.boardproject.comment.entity.Comment;
 import com.elice.boardproject.cosmetic.entity.Cosmetic;
 import com.elice.boardproject.tag.entity.Tag;
 import com.elice.boardproject.user.entity.User;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -34,10 +35,12 @@ public class Post {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id")  // 리뷰인 경우 null 허용
+    @JsonBackReference
     private Board board;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)

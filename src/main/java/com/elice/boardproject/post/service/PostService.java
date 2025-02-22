@@ -20,8 +20,6 @@ import com.elice.boardproject.cosmetic.repository.CosmeticRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -71,7 +69,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponse createPost(PostRequest request, List<MultipartFile> images) {
+    public PostResponse createPost(PostRequest request, List<MultipartFile> images, String email) {
         log.debug("게시글 생성 시작 - 요청 데이터: {}", request);
         
         if (request.getBoardId() == null) {
@@ -79,7 +77,11 @@ public class PostService {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 
-        User user = getCurrentUser();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.error("사용자를 찾을 수 없음: {}", email);
+                    return new CustomException(ErrorCode.USER_NOT_FOUND);
+                });
         log.debug("게시글 작성자 정보: {}", user.getId());
 
         Board board = boardRepository.findById(request.getBoardId())
@@ -152,11 +154,16 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponse updatePost(Long postId, PostRequest request, List<MultipartFile> images) {
+    public PostResponse updatePost(Long postId, PostRequest request, List<MultipartFile> images, String email) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
-        validatePostOwner(post);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!post.getUser().getId().equals(user.getId())) {
+            throw new CustomException(ErrorCode.NOT_POST_OWNER);
+        }
 
         // 화장품 정보 업데이트 (리뷰인 경우)
         if (request.getCosmeticId() != null) {
@@ -204,11 +211,16 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePost(Long postId) {
+    public void deletePost(Long postId, String email) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
-        validatePostOwner(post);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!post.getUser().getId().equals(user.getId())) {
+            throw new CustomException(ErrorCode.NOT_POST_OWNER);
+        }
 
         // 이미지 파일 삭제
         post.getImages().forEach(image -> fileService.deleteFile(image.getFileUrl()));
@@ -221,33 +233,5 @@ public class PostService {
         }
         
         postRepository.delete(post);
-    }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED_USER);
-        }
-        
-        String email = authentication.getName();
-        log.debug("현재 인증된 사용자 이메일: {}", email);
-        
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    log.error("사용자를 찾을 수 없음: {}", email);
-                    return new CustomException(ErrorCode.USER_NOT_FOUND);
-                });
-                
-        log.debug("조회된 사용자 정보 - ID: {}, 이메일: {}, 닉네임: {}", 
-            user.getId(), user.getEmail(), user.getNickname());
-            
-        return user;
-    }
-
-    private void validatePostOwner(Post post) {
-        User currentUser = getCurrentUser();
-        if (!post.getUser().getId().equals(currentUser.getId())) {
-            throw new CustomException(ErrorCode.NOT_POST_OWNER);
-        }
     }
 }

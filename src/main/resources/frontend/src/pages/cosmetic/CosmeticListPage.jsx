@@ -70,7 +70,6 @@ const CosmeticListPage = () => {
   } = useCosmeticStore();
 
   useEffect(() => {
-    // 초기 로딩 시 빈 검색어로 DB 검색
     searchCosmetics('');
   }, [searchCosmetics]);
 
@@ -79,10 +78,10 @@ const CosmeticListPage = () => {
     setIsSearching(true);
     await searchCosmetics(searchQuery.trim());
     setIsSearching(false);
+    setExpandedId(null); // 검색 후 모든 상세 정보를 접은 상태로 초기화
   };
 
   const handleCardClick = (cosmetic) => {
-    // DB에 저장된 제품(리뷰가 있는 제품)은 상세 페이지로 이동
     if (cosmetic.reviewCount > 0) {
       navigate(`/cosmetics/${cosmetic.id}`);
     }
@@ -261,7 +260,7 @@ const CosmeticListPage = () => {
                       startIcon={<RateReviewIcon />}
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/posts/new?type=REVIEW&cosmeticId=${cosmetic.id}`);
+                        navigate(`/posts/new?type=REVIEW&cosmeticId=${cosmetic.id}&boardId=2`);
                       }}
                     >
                       리뷰 작성
