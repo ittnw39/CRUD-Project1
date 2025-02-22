@@ -1,4 +1,4 @@
-package com.elice.boardproject.security.oauth2;
+package com.elice.boardproject.auth.oauth2;
 
 import com.elice.boardproject.user.entity.User;
 import lombok.Getter;

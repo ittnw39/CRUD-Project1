@@ -47,9 +47,9 @@ logging:
     org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET_KEY}
   access-token-validity-in-seconds: 3600
-  refresh-token-validity-in-seconds: 2592000
+  refresh-token-validity-in-seconds: 604800
 
 file:
   upload-dir: uploads 

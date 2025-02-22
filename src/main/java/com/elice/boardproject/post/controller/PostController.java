@@ -12,6 +12,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 
@@ -20,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
+    private static final Logger log = LoggerFactory.getLogger(PostController.class);
 
     @GetMapping("/boards/{boardId}/posts")
     public ResponseEntity<Page<PostResponse>> getPosts(
@@ -57,10 +61,14 @@ public class PostController {
 
     @PostMapping("/posts")
     public ResponseEntity<PostResponse> createPost(
-            @RequestPart PostRequest request,
-            @RequestPart(required = false) List<MultipartFile> images
+            @RequestPart(value = "request") PostRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @AuthenticationPrincipal String email
     ) {
-        return ResponseEntity.ok(postService.createPost(request, images));
+        log.debug("게시글 생성 요청 - 이메일: {}, 요청 데이터: {}", email, request);
+        PostResponse response = postService.createPost(request, images);
+        log.debug("게시글 생성 완료 - 게시글 ID: {}", response.getId());
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/posts/{postId}")

@@ -1,6 +1,6 @@
-package com.elice.boardproject.security.oauth2;
+package com.elice.boardproject.auth.oauth2;
 
-import com.elice.boardproject.security.jwt.JwtTokenProvider;
+import com.elice.boardproject.auth.jwt.JwtTokenProvider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

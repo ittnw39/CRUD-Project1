@@ -11,9 +11,10 @@ import {
   Select,
   MenuItem,
   styled,
-  Rating
+  Rating,
+  IconButton
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon, PhotoCamera as PhotoCameraIcon, Close as CloseIcon } from '@mui/icons-material';
 import usePostStore from '../../store/postStore';
 import useBoardStore from '../../store/boardStore';
 import useCosmeticStore from '../../store/cosmeticStore';
@@ -23,19 +24,37 @@ import ErrorAlert from '../../components/common/ErrorAlert';
 // 별점 스타일 컴포넌트
 const StyledRating = styled(Rating)`
   .MuiRating-icon {
-    font-size: 30px;
-    color: gray;
+    font-size: 40px;
+    margin-right: -3px;
+    color: transparent;
     cursor: pointer;
     transition: color 0.2s;
-    -webkit-text-stroke: 1px black;
+  }
+
+  .MuiRating-iconEmpty {
+    &::before {
+      content: '★';
+      display: block;
+      background: white;
+      -webkit-background-clip: text;
+      -webkit-text-stroke: 1px #ffd700;
+    }
   }
 
   .MuiRating-iconFilled {
-    color: gold;
+    &::before {
+      content: '★';
+      display: block;
+      color: #ffd700;
+    }
   }
 
   .MuiRating-iconHover {
-    color: gold;
+    &::before {
+      content: '★';
+      display: block;
+      color: #ffd700;
+    }
   }
 `;
 
@@ -57,13 +76,17 @@ const PostFormPage = () => {
     tags: [],
     images: []
   });
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
+  const [selectedBoard, setSelectedBoard] = useState(boardId || '');
 
   const { 
     currentBoard,
     fetchBoard,
     isLoading: boardLoading,
     error: boardError,
-    clearError: clearBoardError
+    clearError: clearBoardError,
+    boards
   } = useBoardStore();
 
   const {
@@ -91,8 +114,10 @@ const PostFormPage = () => {
     if (postId) {
       fetchPost(postId);
     }
-    fetchCosmetics();
-  }, [boardId, postId, fetchBoard, fetchPost, fetchCosmetics]);
+    if (!cosmetics || cosmetics.length === 0) {
+      fetchCosmetics();
+    }
+  }, [boardId, postId, fetchBoard, fetchPost, fetchCosmetics, cosmetics]);
 
   useEffect(() => {
     if (postId && currentPost) {
@@ -123,24 +148,53 @@ const PostFormPage = () => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedImages(prev => [...prev, ...files]);
+    
+    // 이미지 미리보기 생성
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviewUrls(prev => [...prev, reader.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // boardId가 문자열로 전달되는 경우를 대비해 숫자로 변환
+    const numericBoardId = boardId ? parseInt(boardId, 10) : null;
+    const numericCosmeticId = selectedCosmetic ? parseInt(selectedCosmetic, 10) : null;
+    
     const postData = {
-      ...formData,
-      boardId: boardId || null,
-      cosmeticId: selectedCosmetic || null,
+      title: formData.title,
+      content: formData.content,
+      rating: formData.rating,
+      tags: formData.tags,
+      boardId: numericBoardId,
+      cosmeticId: numericCosmeticId,
       postType
     };
 
+    console.log('게시글 작성 요청 데이터:', postData);
+
     const success = postId
-      ? await updatePost(postId, postData)
-      : await createPost(postData);
+      ? await updatePost(postId, postData, selectedImages)
+      : await createPost(postData, selectedImages);
 
     if (success) {
-      if (boardId) {
-        navigate(`/boards/${boardId}`);
-      } else if (cosmeticId) {
-        navigate(`/cosmetics/${cosmeticId}`);
+      if (numericBoardId) {
+        navigate(`/boards/${numericBoardId}`);
+      } else if (numericCosmeticId) {
+        navigate(`/cosmetics/${numericCosmeticId}`);
       } else {
         navigate('/');
       }
@@ -183,6 +237,24 @@ const PostFormPage = () => {
       </Box>
 
       <Paper elevation={3} sx={{ p: 4 }}>
+        <Box sx={{ mb: 3 }}>
+          <FormControl fullWidth>
+            <InputLabel>게시판 선택</InputLabel>
+            <Select
+              value={selectedBoard}
+              onChange={(e) => setSelectedBoard(e.target.value)}
+              label="게시판 선택"
+              required
+            >
+              {boards.map((board) => (
+                <MenuItem key={board.id} value={board.id}>
+                  {board.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
         {/* 게시글 타입 선택 */}
         <Box sx={{ mb: 3 }}>
           <FormControl fullWidth>
@@ -209,7 +281,7 @@ const PostFormPage = () => {
                 label="리뷰할 화장품"
                 required
               >
-                {cosmetics.map((cosmetic) => (
+                {Array.isArray(cosmetics) && cosmetics.map((cosmetic) => (
                   <MenuItem key={cosmetic.id} value={cosmetic.id}>
                     {cosmetic.itemName} ({cosmetic.entpName})
                   </MenuItem>
@@ -218,6 +290,67 @@ const PostFormPage = () => {
             </FormControl>
           </Box>
         )}
+
+        {/* 이미지 업로드 섹션 */}
+        <Box sx={{ mb: 3 }}>
+          <Typography component="legend" gutterBottom>이미지 첨부</Typography>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageChange}
+            style={{ display: 'none' }}
+            id="image-upload"
+          />
+          <label htmlFor="image-upload">
+            <Button
+              variant="outlined"
+              component="span"
+              startIcon={<PhotoCameraIcon />}
+            >
+              이미지 선택
+            </Button>
+          </label>
+
+          {/* 이미지 미리보기 */}
+          {imagePreviewUrls.length > 0 && (
+            <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {imagePreviewUrls.map((url, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    position: 'relative',
+                    width: 100,
+                    height: 100
+                  }}
+                >
+                  <img
+                    src={url}
+                    alt={`미리보기 ${index + 1}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '4px'
+                    }}
+                  />
+                  <IconButton
+                    size="small"
+                    sx={{
+                      position: 'absolute',
+                      top: -10,
+                      right: -10,
+                      bgcolor: 'background.paper'
+                    }}
+                    onClick={() => removeImage(index)}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
 
         {/* 게시글 폼 */}
         <Box component="form" onSubmit={handleSubmit}>

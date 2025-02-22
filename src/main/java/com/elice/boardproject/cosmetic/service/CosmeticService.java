@@ -16,6 +16,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import org.springframework.web.util.UriComponentsBuilder;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -242,5 +244,77 @@ public class CosmeticService {
         return cosmeticRepository.findById(id)
             .map(Mono::just)
             .orElseThrow(() -> new CustomException(ErrorCode.COSMETIC_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Cosmetic> searchCosmeticsByKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return cosmeticRepository.findAll();
+        }
+
+        // DB에서 검색
+        List<Cosmetic> dbResults = cosmeticRepository.searchCosmetics(keyword.trim());
+        
+        // 이미 있는 화장품의 reportSeq 목록
+        Set<String> existingReportSeqs = dbResults.stream()
+            .map(Cosmetic::getCosmeticReportSeq)
+            .collect(Collectors.toSet());
+
+        // 검색어가 있을 때만 API 호출
+        if (!keyword.trim().isEmpty()) {
+            try {
+                Mono<CosmeticSearchResponse> apiResponse = searchCosmetics(keyword.trim(), 1, 10);
+                CosmeticSearchResponse response = apiResponse.block();
+                
+                if (response != null && response.getBody() != null && response.getBody().getItems() != null) {
+                    List<CosmeticSearchResponse.CosmeticSearchItem> apiItems = response.getBody().getItems().getItemList();
+                    
+                    // API 결과를 Cosmetic 엔티티로 변환하고 DB에 없는 것만 추가
+                    for (CosmeticSearchResponse.CosmeticSearchItem item : apiItems) {
+                        if (!existingReportSeqs.contains(item.getCosmeticReportSeq())) {
+                            Cosmetic cosmetic = new Cosmetic();
+                            cosmetic.setCosmeticReportSeq(item.getCosmeticReportSeq());
+                            cosmetic.setItemName(item.getItemName());
+                            cosmetic.setEntpName(item.getEntpName());
+                            cosmetic.setReportFlagName(item.getReportFlagName());
+                            cosmetic.setItemPh(item.getItemPh());
+                            cosmetic.setCosmeticStdName(item.getCosmeticStdName());
+                            
+                            // SPF/PA 설정
+                            if (item.getSpf() != null && !item.getSpf().equals("0")) {
+                                cosmetic.setSpf(item.getSpf());
+                            } else {
+                                String extractedSpf = extractSpf(item.getItemName());
+                                if (extractedSpf != null) {
+                                    cosmetic.setSpf(extractedSpf);
+                                }
+                            }
+                            
+                            if (item.getPa() != null && !item.getPa().equals("0")) {
+                                cosmetic.setPa(item.getPa());
+                            } else {
+                                String extractedPa = extractPa(item.getItemName());
+                                if (extractedPa != null) {
+                                    cosmetic.setPa(extractedPa);
+                                }
+                            }
+                            
+                            cosmetic.setUsageDosage(item.getUsageDosage());
+                            cosmetic.setEffectYn1(item.getEffectYn1());
+                            cosmetic.setEffectYn2(item.getEffectYn2());
+                            cosmetic.setEffectYn3(item.getEffectYn3());
+                            cosmetic.setWaterProofingName(item.getWaterProofingName());
+                            
+                            dbResults.add(cosmetic);
+                            existingReportSeqs.add(item.getCosmeticReportSeq());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("API 검색 중 에러 발생: {}", e.getMessage());
+            }
+        }
+        
+        return dbResults;
     }
 } 

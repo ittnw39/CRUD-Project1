@@ -1,10 +1,11 @@
-package com.elice.boardproject.security.jwt;
+package com.elice.boardproject.auth.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
@@ -25,11 +27,23 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         
-        String jwt = resolveToken(request);
+        try {
+            String jwt = resolveToken(request);
+            log.debug("JWT 토큰: {}", jwt);
 
-        if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-            Authentication authentication = jwtTokenProvider.getAuthentication(jwt);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
+                Authentication authentication = jwtTokenProvider.getAuthentication(jwt);
+                if (authentication != null) {
+                    log.debug("인증 정보 설정: {}", authentication.getName());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    log.error("인증 정보를 가져올 수 없습니다.");
+                }
+            } else {
+                log.debug("유효한 JWT 토큰이 없습니다.");
+            }
+        } catch (Exception e) {
+            log.error("JWT 처리 중 오류 발생: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

@@ -53,36 +53,33 @@ const usePostStore = create((set) => ({
     }
   },
 
-  createPost: async (postData) => {
+  createPost: async (postData, images) => {
     set({ isLoading: true, error: null });
     try {
       const formData = new FormData();
-      Object.keys(postData).forEach(key => {
-        if (key === 'images') {
-          postData.images.forEach(image => {
-            formData.append('images', image);
-          });
-        } else {
-          formData.append(key, postData[key]);
-        }
-      });
+      formData.append('request', new Blob([JSON.stringify(postData)], { type: 'application/json' }));
+      
+      if (images && images.length > 0) {
+        images.forEach(image => {
+          formData.append('images', image);
+        });
+      }
 
       const response = await axios.post('/api/posts', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
       
-      set(state => ({
-        posts: [response.data, ...state.posts],
-        totalElements: state.totalElements + 1,
-        isLoading: false
-      }));
-      return true;
+      set({ isLoading: false });
+      return response.data;
     } catch (error) {
+      console.error('게시글 작성 에러:', error);
       set({ 
         error: error.response?.data?.message || '게시글 작성에 실패했습니다.',
         isLoading: false 
       });
-      return false;
+      return null;
     }
   },
 

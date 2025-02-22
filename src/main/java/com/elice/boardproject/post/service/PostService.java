@@ -25,6 +25,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +41,7 @@ public class PostService {
     private final CosmeticRepository cosmeticRepository;
     private final TagRepository tagRepository;
     private final FileService fileService;
+    private static final Logger log = LoggerFactory.getLogger(PostService.class);
 
     public Page<PostResponse> getPostsByBoardId(Long boardId, Pageable pageable) {
         return postRepository.findByBoardId(boardId, pageable)
@@ -69,21 +72,39 @@ public class PostService {
 
     @Transactional
     public PostResponse createPost(PostRequest request, List<MultipartFile> images) {
+        log.debug("게시글 생성 시작 - 요청 데이터: {}", request);
+        
+        if (request.getBoardId() == null) {
+            log.error("게시판 ID가 누락되었습니다.");
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
         User user = getCurrentUser();
+        log.debug("게시글 작성자 정보: {}", user.getId());
+
         Board board = boardRepository.findById(request.getBoardId())
-                .orElseThrow(() -> new CustomException(ErrorCode.BOARD_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("게시판을 찾을 수 없음: {}", request.getBoardId());
+                    return new CustomException(ErrorCode.BOARD_NOT_FOUND);
+                });
+        log.debug("게시판 정보: {}", board.getId());
 
         // 화장품 조회 (리뷰인 경우에만)
         Cosmetic cosmetic = null;
         if (request.getCosmeticId() != null) {
             cosmetic = cosmeticRepository.findById(request.getCosmeticId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.COSMETIC_NOT_FOUND));
+                    .orElseThrow(() -> {
+                        log.error("화장품을 찾을 수 없음: {}", request.getCosmeticId());
+                        return new CustomException(ErrorCode.COSMETIC_NOT_FOUND);
+                    });
+            log.debug("화장품 정보: {}", cosmetic.getId());
             
             // 리뷰 중복 검사
             if (request.getPostType() == PostType.REVIEW) {
                 boolean exists = postRepository.existsByUserAndCosmeticAndPostType(
                     user, cosmetic, PostType.REVIEW);
                 if (exists) {
+                    log.error("이미 작성한 리뷰가 존재합니다. 사용자: {}, 화장품: {}", user.getId(), cosmetic.getId());
                     throw new CustomException(ErrorCode.DUPLICATE_REVIEW);
                 }
             }
@@ -209,8 +230,18 @@ public class PostService {
         }
         
         String email = authentication.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        log.debug("현재 인증된 사용자 이메일: {}", email);
+        
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.error("사용자를 찾을 수 없음: {}", email);
+                    return new CustomException(ErrorCode.USER_NOT_FOUND);
+                });
+                
+        log.debug("조회된 사용자 정보 - ID: {}, 이메일: {}, 닉네임: {}", 
+            user.getId(), user.getEmail(), user.getNickname());
+            
+        return user;
     }
 
     private void validatePostOwner(Post post) {

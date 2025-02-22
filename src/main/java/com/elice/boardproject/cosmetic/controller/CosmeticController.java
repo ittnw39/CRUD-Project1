@@ -1,7 +1,6 @@
 package com.elice.boardproject.cosmetic.controller;
 
 import com.elice.boardproject.cosmetic.dto.CosmeticListResponse;
-import com.elice.boardproject.cosmetic.dto.CosmeticSearchResponse;
 import com.elice.boardproject.cosmetic.entity.Cosmetic;
 import com.elice.boardproject.cosmetic.service.CosmeticService;
 import lombok.RequiredArgsConstructor;
@@ -31,15 +30,13 @@ public class CosmeticController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Mono<CosmeticSearchResponse>> searchCosmetics(
-            @RequestParam(name = "item_name") String itemName,
-            @RequestParam(value = "pageNo", defaultValue = "1") int pageNo,
-            @RequestParam(value = "numOfRows", defaultValue = "10") int numOfRows) {
-        return ResponseEntity.ok(cosmeticService.searchCosmetics(itemName, pageNo, numOfRows));
+    public ResponseEntity<List<Cosmetic>> searchCosmetics(
+            @RequestParam(name = "item_name", required = false) String keyword) {
+        return ResponseEntity.ok(cosmeticService.searchCosmeticsByKeyword(keyword));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Mono<Cosmetic>> getCosmeticById(@PathVariable Long id) {
+    public ResponseEntity<Mono<Cosmetic>> getCosmeticById(@PathVariable(name = "id") Long id) {
         return ResponseEntity.ok(cosmeticService.getCosmeticById(id));
     }
 
