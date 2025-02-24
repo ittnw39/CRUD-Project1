@@ -61,9 +61,9 @@ public class PostController {
 
     @PostMapping("/posts")
     public ResponseEntity<PostResponse> createPost(
-            @RequestPart(value = "request") PostRequest request,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images,
-            @AuthenticationPrincipal(expression = "username") String email
+            @RequestBody PostRequest request,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @AuthenticationPrincipal String email
     ) {
         log.debug("게시글 생성 요청 - 이메일: {}, 요청 데이터: {}", email, request);
         PostResponse response = postService.createPost(request, images, email);
@@ -74,9 +74,9 @@ public class PostController {
     @PutMapping("/posts/{postId}")
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long postId,
-            @RequestPart PostRequest request,
-            @RequestPart(required = false) List<MultipartFile> images,
-            @AuthenticationPrincipal(expression = "username") String email
+            @RequestBody PostRequest request,
+            @RequestParam(required = false) List<MultipartFile> images,
+            @AuthenticationPrincipal String email
     ) {
         return ResponseEntity.ok(postService.updatePost(postId, request, images, email));
     }
@@ -84,7 +84,7 @@ public class PostController {
     @DeleteMapping("/posts/{postId}")
     public ResponseEntity<Void> deletePost(
             @PathVariable Long postId,
-            @AuthenticationPrincipal(expression = "username") String email
+            @AuthenticationPrincipal String email
     ) {
         postService.deletePost(postId, email);
         return ResponseEntity.ok().build();

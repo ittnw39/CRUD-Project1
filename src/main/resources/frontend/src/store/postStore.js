@@ -57,7 +57,6 @@ const usePostStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const formData = new FormData();
-      formData.append('request', new Blob([JSON.stringify(postData)], { type: 'application/json' }));
       
       if (images && images.length > 0) {
         images.forEach(image => {
@@ -65,9 +64,9 @@ const usePostStore = create((set) => ({
         });
       }
 
-      const response = await axios.post('/api/posts', formData, {
+      const response = await axios.post('/api/posts', postData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'application/json'
         }
       });
       
@@ -83,22 +82,19 @@ const usePostStore = create((set) => ({
     }
   },
 
-  updatePost: async (postId, postData) => {
+  updatePost: async (postId, postData, images) => {
     set({ isLoading: true, error: null });
     try {
       const formData = new FormData();
-      Object.keys(postData).forEach(key => {
-        if (key === 'images') {
-          postData.images.forEach(image => {
-            formData.append('images', image);
-          });
-        } else {
-          formData.append(key, postData[key]);
-        }
-      });
+      
+      if (images && images.length > 0) {
+        images.forEach(image => {
+          formData.append('images', image);
+        });
+      }
 
-      const response = await axios.put(`/api/posts/${postId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const response = await axios.put(`/api/posts/${postId}`, postData, {
+        headers: { 'Content-Type': 'application/json' }
       });
       
       set(state => ({

@@ -1,84 +1,70 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
+  Typography,
+  Box,
+  TextField,
+  Button,
   Grid,
   Card,
   CardContent,
   CardMedia,
-  Typography,
-  Box,
-  TextField,
-  InputAdornment,
   IconButton,
-  Rating,
-  Chip,
-  Button,
   Collapse,
-  styled,
-  CircularProgress
+  Rating,
+  CircularProgress,
+  InputAdornment,
+  Chip,
+  styled
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  RateReview as RateReviewIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon
-} from '@mui/icons-material';
-import useCosmeticStore from '../../store/cosmeticStore';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import SearchIcon from '@mui/icons-material/Search';
+import RateReviewIcon from '@mui/icons-material/RateReview';
+import useStore from '../../store/cosmeticStore';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorAlert from '../../components/common/ErrorAlert';
 
 // 별점 스타일 컴포넌트
-const StyledRating = styled(Rating)`
-  .MuiRating-icon {
-    font-size: 20px;
-    margin-right: -3px;
-    color: transparent;
-    cursor: default;
-  }
-
-  .MuiRating-iconEmpty {
-    &::before {
-      content: '★';
-      display: block;
-      background: white;
-      -webkit-background-clip: text;
-      -webkit-text-stroke: 1px #ffd700;
+const StyledRating = styled(Rating)({
+  '.MuiRating-icon': {
+    fontSize: '20px',
+    marginRight: '-3px',
+    color: 'transparent',
+    cursor: 'default',
+  },
+  '.MuiRating-iconEmpty': {
+    '&::before': {
+      content: '"★"',
+      display: 'block',
+      background: 'white',
+      WebkitBackgroundClip: 'text',
+      WebkitTextStroke: '1px #ffd700',
+    }
+  },
+  '.MuiRating-iconFilled': {
+    '&::before': {
+      content: '"★"',
+      display: 'block',
+      color: '#ffd700',
     }
   }
-
-  .MuiRating-iconFilled {
-    &::before {
-      content: '★';
-      display: block;
-      color: #ffd700;
-    }
-  }
-`;
+});
 
 const CosmeticListPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
-  const { 
-    cosmetics = [], 
-    searchCosmetics,
-    isLoading, 
-    error, 
-    clearError 
-  } = useCosmeticStore();
-
-  useEffect(() => {
-    searchCosmetics('');
-  }, [searchCosmetics]);
+  const { cosmetics, searchCosmetics, isLoading, error, clearError } = useStore();
 
   const handleSearch = async (e) => {
     e.preventDefault();
     setIsSearching(true);
     await searchCosmetics(searchQuery.trim());
     setIsSearching(false);
-    setExpandedId(null); // 검색 후 모든 상세 정보를 접은 상태로 초기화
+    setExpandedId(null);
   };
 
   const handleCardClick = (cosmetic) => {

@@ -50,6 +50,7 @@ cosmetic:
 logging:
   level:
     com.elice.boardproject: DEBUG
+    com.elice.boardproject.auth.jwt: WARN
     org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
 
 jwt:

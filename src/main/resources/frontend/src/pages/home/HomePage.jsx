@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Box, Typography, Card, CardContent, CardMedia, Rating } from '@mui/material';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
@@ -38,11 +38,7 @@ const StyledRating = styled(Rating)`
 `;
 
 const HomePage = () => {
-  const { cosmetics, searchCosmetics, isLoading } = useCosmeticStore();
-
-  useEffect(() => {
-    searchCosmetics('');
-  }, [searchCosmetics]);
+  const { cosmetics, isLoading } = useCosmeticStore();
 
   const sliderSettings = {
     dots: true,
@@ -125,7 +121,7 @@ const HomePage = () => {
           </Slider>
         ) : (
           <Typography variant="body1" color="text.secondary" align="center">
-            등록된 화장품이 없습니다.
+            화장품을 검색해보세요.
           </Typography>
         )}
       </Box>

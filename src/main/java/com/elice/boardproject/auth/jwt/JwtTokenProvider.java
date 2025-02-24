@@ -99,7 +99,9 @@ public class JwtTokenProvider {
                 role.startsWith("ROLE_") ? role : "ROLE_" + role
             );
 
-            log.debug("토큰 인증 정보 - 사용자: {}, 권한: {}", subject, authority.getAuthority());
+            if (log.isTraceEnabled()) {
+                log.trace("토큰 인증 정보 - 사용자: {}, 권한: {}", subject, authority.getAuthority());
+            }
             return new UsernamePasswordAuthenticationToken(subject, "", Collections.singleton(authority));
         } catch (JwtException | IllegalArgumentException e) {
             log.error("토큰 파싱 중 오류 발생: {}", e.getMessage());
@@ -110,7 +112,6 @@ public class JwtTokenProvider {
     public boolean validateToken(String token) {
         try {
             if (token == null || token.isEmpty()) {
-                log.error("토큰이 비어있습니다.");
                 return false;
             }
 
@@ -119,7 +120,9 @@ public class JwtTokenProvider {
                 .build()
                 .parseClaimsJws(token);
             
-            log.debug("토큰 검증 성공");
+            if (log.isTraceEnabled()) {
+                log.trace("토큰 검증 성공");
+            }
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             log.error("잘못된 JWT 토큰: {}", e.getMessage());
