@@ -45,13 +45,13 @@ const PostFormPage = () => {
     content: '',
     rating: 0,
     tags: [],
-    images: []
+    images: [],
+    cosmeticType: ''
   });
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
   const [selectedBoard, setSelectedBoard] = useState(boardId || '');
   const [error, setError] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
 
   const { 
     currentBoard,
@@ -79,13 +79,6 @@ const PostFormPage = () => {
     error: cosmeticsError,
     clearError: clearCosmeticsError
   } = useCosmeticStore();
-
-  const categories = [
-    { value: 'skincare', label: '스킨케어' },
-    { value: 'makeup', label: '메이크업' },
-    { value: 'bodycare', label: '바디케어' },
-    { value: 'suncare', label: '선케어' }
-  ];
 
   useEffect(() => {
     fetchBoards();
@@ -121,7 +114,8 @@ const PostFormPage = () => {
         content: currentPost.content,
         rating: currentPost.rating || 0,
         tags: currentPost.tags || [],
-        images: []
+        images: [],
+        cosmeticType: currentPost.cosmeticType || ''
       });
       setPostType(currentPost.postType);
       setSelectedCosmetic(currentPost.cosmeticId || '');
@@ -176,10 +170,6 @@ const PostFormPage = () => {
         setError('화장품을 선택해주세요.');
         return;
       }
-      if (!selectedCategory) {
-        setError('카테고리를 선택해주세요.');
-        return;
-      }
     }
 
     const formData = new FormData();
@@ -210,7 +200,7 @@ const PostFormPage = () => {
         effectYn2: selectedCosmeticData?.effectYn2 || '',
         effectYn3: selectedCosmeticData?.effectYn3 || '',
         waterProofingName: selectedCosmeticData?.waterProofingName || '',
-        cosmeticType: selectedCategory
+        cosmeticType: formValues.cosmeticType
       };
       
       console.log('전송할 화장품 정보:', cosmeticInfo);
@@ -334,8 +324,8 @@ const PostFormPage = () => {
               <FormControl fullWidth>
                 <InputLabel>화장품 카테고리</InputLabel>
                 <Select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  value={formValues.cosmeticType}
+                  onChange={(e) => setFormValues(prev => ({ ...prev, cosmeticType: e.target.value }))}
                   label="화장품 카테고리"
                   required
                 >
@@ -466,25 +456,6 @@ const PostFormPage = () => {
                   size="large"
                 />
               </Box>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  카테고리 *
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                  required
-                >
-                  <option value="">카테고리 선택</option>
-                  {categories.map((category) => (
-                    <option key={category.value} value={category.value}>
-                      {category.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </>
           )}
 
