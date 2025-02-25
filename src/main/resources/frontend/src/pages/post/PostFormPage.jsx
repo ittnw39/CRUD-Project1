@@ -20,6 +20,7 @@ import useBoardStore from '../../store/boardStore';
 import useCosmeticStore from '../../store/cosmeticStore';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorAlert from '../../components/common/ErrorAlert';
+import { CosmeticType } from '../../constants/enums';
 
 // 별점 스타일 컴포넌트
 const StyledRating = styled(Rating)({
@@ -50,7 +51,6 @@ const PostFormPage = () => {
   const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
   const [selectedBoard, setSelectedBoard] = useState(boardId || '');
   const [error, setError] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const { 
@@ -210,7 +210,7 @@ const PostFormPage = () => {
         effectYn2: selectedCosmeticData?.effectYn2 || '',
         effectYn3: selectedCosmeticData?.effectYn3 || '',
         waterProofingName: selectedCosmeticData?.waterProofingName || '',
-        categories: selectedCategory
+        cosmeticType: selectedCategory
       };
       
       console.log('전송할 화장품 정보:', cosmeticInfo);
@@ -311,23 +311,42 @@ const PostFormPage = () => {
 
         {/* 화장품 선택 (리뷰인 경우) */}
         {postType === 'REVIEW' && (
-          <Box sx={{ mb: 3 }}>
-            <FormControl fullWidth>
-              <InputLabel>리뷰할 화장품</InputLabel>
-              <Select
-                value={selectedCosmetic}
-                onChange={handleCosmeticChange}
-                label="리뷰할 화장품"
-                required
-              >
-                {Array.isArray(cosmetics) && cosmetics.map((cosmetic) => (
-                  <MenuItem key={cosmetic.cosmeticReportSeq} value={cosmetic.cosmeticReportSeq}>
-                    {cosmetic.itemName} ({cosmetic.entpName})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
+          <>
+            <Box sx={{ mb: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel>리뷰할 화장품</InputLabel>
+                <Select
+                  value={selectedCosmetic}
+                  onChange={handleCosmeticChange}
+                  label="리뷰할 화장품"
+                  required
+                >
+                  {Array.isArray(cosmetics) && cosmetics.map((cosmetic) => (
+                    <MenuItem key={cosmetic.cosmeticReportSeq} value={cosmetic.cosmeticReportSeq}>
+                      {cosmetic.itemName} ({cosmetic.entpName})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel>화장품 카테고리</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  label="화장품 카테고리"
+                  required
+                >
+                  <MenuItem value={CosmeticType.SKINCARE}>스킨케어</MenuItem>
+                  <MenuItem value={CosmeticType.BODYCARE}>바디케어</MenuItem>
+                  <MenuItem value={CosmeticType.SUNCARE}>선케어</MenuItem>
+                  <MenuItem value={CosmeticType.MAKEUP}>메이크업</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </>
         )}
 
         {/* 이미지 업로드 섹션 */}

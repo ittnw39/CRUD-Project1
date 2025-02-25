@@ -103,6 +103,12 @@ public class PostService {
         if (PostType.REVIEW.equals(request.getPostType()) && request.getCosmeticInfo() != null) {
             CosmeticInfo info = request.getCosmeticInfo();
             
+            // 화장품 카테고리 필수값 검증
+            if (info.getCosmeticType() == null) {
+                log.error("화장품 카테고리가 누락되었습니다.");
+                throw new CustomException(ErrorCode.INVALID_REQUEST);
+            }
+            
             // 이미 등록된 화장품인지 확인
             cosmetic = cosmeticRepository.findByCosmeticReportSeq(info.getCosmeticReportSeq())
                     .orElseGet(() -> {
@@ -121,9 +127,15 @@ public class PostService {
                         newCosmetic.setEffectYn2(info.getEffectYn2());
                         newCosmetic.setEffectYn3(info.getEffectYn3());
                         newCosmetic.setWaterProofingName(info.getWaterProofingName());
-                        newCosmetic.setCategories(info.getCategories());
                         return cosmeticRepository.save(newCosmetic);
                     });
+
+            // 카테고리가 없는 경우에만 업데이트
+            if (cosmetic.getCosmeticType() == null) {
+                cosmetic.setCosmeticType(info.getCosmeticType());
+                cosmetic = cosmeticRepository.save(cosmetic);
+                log.info("화장품 카테고리 업데이트: {} -> {}", cosmetic.getItemName(), info.getCosmeticType());
+            }
             
             log.debug("화장품 정보: {}", cosmetic.getId());
             
@@ -201,6 +213,12 @@ public class PostService {
         if (PostType.REVIEW.equals(request.getPostType()) && request.getCosmeticInfo() != null) {
             CosmeticInfo info = request.getCosmeticInfo();
             
+            // 화장품 카테고리 필수값 검증
+            if (info.getCosmeticType() == null) {
+                log.error("화장품 카테고리가 누락되었습니다.");
+                throw new CustomException(ErrorCode.INVALID_REQUEST);
+            }
+            
             // 이미 등록된 화장품인지 확인
             Cosmetic cosmetic = cosmeticRepository.findByCosmeticReportSeq(info.getCosmeticReportSeq())
                     .orElseGet(() -> {
@@ -219,7 +237,6 @@ public class PostService {
                         newCosmetic.setEffectYn2(info.getEffectYn2());
                         newCosmetic.setEffectYn3(info.getEffectYn3());
                         newCosmetic.setWaterProofingName(info.getWaterProofingName());
-                        newCosmetic.setCategories(info.getCategories());
                         return cosmeticRepository.save(newCosmetic);
                     });
             

@@ -1,5 +1,6 @@
 package com.elice.boardproject.post.dto;
 
+import com.elice.boardproject.cosmetic.entity.CosmeticType;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -23,5 +24,5 @@ public class CosmeticInfo {
     private String effectYn2;
     private String effectYn3;
     private String waterProofingName;
-    private String categories;
+    private CosmeticType cosmeticType;
 } 

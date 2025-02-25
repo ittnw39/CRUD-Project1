@@ -71,3 +71,7 @@ uploads/
 
 # Separate Repository
 TodayILearn/
+
+### Project Specific ###
+/src/main/resources/data/
+application.yml

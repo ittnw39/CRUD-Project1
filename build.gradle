@@ -61,19 +61,23 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	
 	// Flyway
-	implementation 'org.flywaydb:flyway-core'
-	implementation 'org.flywaydb:flyway-mysql'
+	implementation 'org.flywaydb:flyway-core:9.22.3'
+	implementation 'org.flywaydb:flyway-mysql:9.22.3'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
 
-// Flyway 설정 추가
 flyway {
-	url = 'jdbc:mysql://localhost:3306/glowgallery'
+	url = 'jdbc:mysql://localhost:3306/glowgallery?useSSL=false&serverTimezone=UTC'
 	user = 'root'
 	password = '6989'
 	locations = ['classpath:db/migration']
 	driver = 'com.mysql.cj.jdbc.Driver'
+	baselineOnMigrate = true
+	validateOnMigrate = false
+	cleanOnValidationError = true
 }
+
+// Flyway 설정은 application.properties에서 관리

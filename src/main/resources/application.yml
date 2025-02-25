@@ -1,23 +1,23 @@
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/glowgallery?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: 6989
   jpa:
-    show-sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: create
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        show_sql: true
     defer-datasource-initialization: true
   sql:
     init:
       mode: always
-      encoding: UTF-8
-      platform: mysql
+  flyway:
+    enabled: false
   servlet:
     multipart:
       max-file-size: 10MB
@@ -49,9 +49,12 @@ cosmetic:
 
 logging:
   level:
-    com.elice.boardproject: DEBUG
+    org.hibernate.SQL: debug
+    org.hibernate.type: trace
+    com.elice.boardproject: debug
     com.elice.boardproject.auth.jwt: WARN
     org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 jwt:
   secret: ${JWT_SECRET_KEY}
