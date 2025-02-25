@@ -22,41 +22,11 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorAlert from '../../components/common/ErrorAlert';
 
 // 별점 스타일 컴포넌트
-const StyledRating = styled(Rating)`
-  .MuiRating-icon {
-    font-size: 40px;
-    margin-right: -3px;
-    color: transparent;
-    cursor: pointer;
-    transition: color 0.2s;
+const StyledRating = styled(Rating)({
+  '& .MuiRating-icon': {
+    marginRight: '-3px'  // 별들 사이의 간격을 줄임
   }
-
-  .MuiRating-iconEmpty {
-    &::before {
-      content: '★';
-      display: block;
-      background: white;
-      -webkit-background-clip: text;
-      -webkit-text-stroke: 1px #ffd700;
-    }
-  }
-
-  .MuiRating-iconFilled {
-    &::before {
-      content: '★';
-      display: block;
-      color: #ffd700;
-    }
-  }
-
-  .MuiRating-iconHover {
-    &::before {
-      content: '★';
-      display: block;
-      color: #ffd700;
-    }
-  }
-`;
+});
 
 const PostFormPage = () => {
   const navigate = useNavigate();
@@ -69,7 +39,7 @@ const PostFormPage = () => {
 
   const [selectedCosmetic, setSelectedCosmetic] = useState(cosmeticId || '');
   const [postType, setPostType] = useState(initialType);
-  const [formData, setFormData] = useState({
+  const [formValues, setFormValues] = useState({
     title: '',
     content: '',
     rating: 0,
@@ -79,6 +49,9 @@ const PostFormPage = () => {
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
   const [selectedBoard, setSelectedBoard] = useState(boardId || '');
+  const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   const { 
     currentBoard,
@@ -102,11 +75,17 @@ const PostFormPage = () => {
 
   const {
     cosmetics,
-    fetchCosmetics,
     isLoading: cosmeticsLoading,
     error: cosmeticsError,
     clearError: clearCosmeticsError
   } = useCosmeticStore();
+
+  const categories = [
+    { value: 'skincare', label: '스킨케어' },
+    { value: 'makeup', label: '메이크업' },
+    { value: 'bodycare', label: '바디케어' },
+    { value: 'suncare', label: '선케어' }
+  ];
 
   useEffect(() => {
     fetchBoards();
@@ -116,17 +95,28 @@ const PostFormPage = () => {
     if (postId) {
       fetchPost(postId);
     }
-    if (!cosmetics || cosmetics.length === 0) {
-      fetchCosmetics();
-    }
-    if (cosmeticId) {
+    if (cosmeticId && cosmeticId !== 'null') {
+      console.log('화장품 ID 설정:', cosmeticId);
       setSelectedCosmetic(cosmeticId);
+      
+      // localStorage에서 화장품 정보 가져오기
+      const savedCosmeticData = localStorage.getItem('selectedCosmetic');
+      if (savedCosmeticData) {
+        try {
+          const parsedData = JSON.parse(savedCosmeticData);
+          if (parsedData.cosmeticReportSeq === cosmeticId) {
+            console.log('저장된 화장품 정보:', parsedData);
+          }
+        } catch (error) {
+          console.error('화장품 정보 파싱 중 오류:', error);
+        }
+      }
     }
-  }, [boardId, postId, cosmeticId, fetchBoard, fetchPost, fetchCosmetics, cosmetics, fetchBoards]);
+  }, [boardId, postId, cosmeticId, fetchBoard, fetchPost, fetchBoards]);
 
   useEffect(() => {
     if (postId && currentPost) {
-      setFormData({
+      setFormValues({
         title: currentPost.title,
         content: currentPost.content,
         rating: currentPost.rating || 0,
@@ -138,16 +128,23 @@ const PostFormPage = () => {
     }
   }, [postId, currentPost]);
 
+  // 컴포넌트가 언마운트될 때 localStorage 정리
+  useEffect(() => {
+    return () => {
+      localStorage.removeItem('selectedCosmetic');
+    };
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormValues(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
   const handleRatingChange = (event, newValue) => {
-    setFormData(prev => ({
+    setFormValues(prev => ({
       ...prev,
       rating: newValue
     }));
@@ -157,7 +154,6 @@ const PostFormPage = () => {
     const files = Array.from(e.target.files);
     setSelectedImages(prev => [...prev, ...files]);
     
-    // 이미지 미리보기 생성
     files.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -175,35 +171,78 @@ const PostFormPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!selectedBoard) {
-      // TODO: 에러 처리
-      return;
+    if (postType === 'REVIEW') {
+      if (!selectedCosmetic) {
+        setError('화장품을 선택해주세요.');
+        return;
+      }
+      if (!selectedCategory) {
+        setError('카테고리를 선택해주세요.');
+        return;
+      }
     }
+
+    const formData = new FormData();
+    formData.append('title', formValues.title);
+    formData.append('content', formValues.content);
+    formData.append('boardId', selectedBoard);
+    formData.append('postType', postType);
     
-    const postData = {
-      title: formData.title,
-      content: formData.content,
-      rating: formData.rating,
-      tags: formData.tags,
-      boardId: parseInt(selectedBoard, 10),
-      cosmeticId: selectedCosmetic ? parseInt(selectedCosmetic, 10) : null,
-      postType
-    };
+    if (postType === 'REVIEW') {
+      if (formValues.rating === 0) {
+        setError('별점을 선택해주세요.');
+        return;
+      }
+      formData.append('rating', formValues.rating);
+      
+      const selectedCosmeticData = cosmetics.find(c => c.cosmeticReportSeq === selectedCosmetic);
+      const cosmeticInfo = {
+        cosmeticReportSeq: selectedCosmetic,
+        itemName: selectedCosmeticData?.itemName || '',
+        entpName: selectedCosmeticData?.entpName || '',
+        reportFlagName: selectedCosmeticData?.reportFlagName || '',
+        itemPh: selectedCosmeticData?.itemPh || '',
+        cosmeticStdName: selectedCosmeticData?.cosmeticStdName || '',
+        spf: selectedCosmeticData?.spf || '',
+        pa: selectedCosmeticData?.pa || '',
+        usageDosage: selectedCosmeticData?.usageDosage || '',
+        effectYn1: selectedCosmeticData?.effectYn1 || '',
+        effectYn2: selectedCosmeticData?.effectYn2 || '',
+        effectYn3: selectedCosmeticData?.effectYn3 || '',
+        waterProofingName: selectedCosmeticData?.waterProofingName || '',
+        categories: selectedCategory
+      };
+      
+      console.log('전송할 화장품 정보:', cosmeticInfo);
+      formData.append('cosmeticInfo', JSON.stringify(cosmeticInfo));
+    }
 
-    console.log('게시글 작성 요청 데이터:', postData);
+    formData.append('tags', JSON.stringify(formValues.tags));
 
-    const success = postId
-      ? await updatePost(postId, postData, selectedImages)
-      : await createPost(postData, selectedImages);
+    if (selectedImages.length > 0) {
+      for (let i = 0; i < selectedImages.length; i++) {
+        formData.append('images', selectedImages[i]);
+      }
+    }
 
-    if (success) {
+    try {
+      if (postId) {
+        await updatePost(postId, formData, selectedImages);
+      } else {
+        await createPost(formData, selectedImages);
+      }
+      
       navigate(`/boards/${selectedBoard}`);
+    } catch (error) {
+      console.error('게시글 저장 중 오류 발생:', error);
+      setError(error.message);
     }
   };
 
   const handleTypeChange = (event) => {
     setPostType(event.target.value);
-    if (event.target.value === 'REVIEW' && !selectedCosmetic) {
+    // REVIEW 타입이 아닐 경우 화장품 선택 초기화
+    if (event.target.value !== 'REVIEW') {
       setSelectedCosmetic('');
     }
   };
@@ -282,7 +321,7 @@ const PostFormPage = () => {
                 required
               >
                 {Array.isArray(cosmetics) && cosmetics.map((cosmetic) => (
-                  <MenuItem key={cosmetic.id} value={cosmetic.id}>
+                  <MenuItem key={cosmetic.cosmeticReportSeq} value={cosmetic.cosmeticReportSeq}>
                     {cosmetic.itemName} ({cosmetic.entpName})
                   </MenuItem>
                 ))}
@@ -360,7 +399,7 @@ const PostFormPage = () => {
               <input
                 type="text"
                 name="title"
-                value={formData.title}
+                value={formValues.title}
                 onChange={handleChange}
                 required
                 style={{
@@ -380,7 +419,7 @@ const PostFormPage = () => {
             <FormControl fullWidth>
               <textarea
                 name="content"
-                value={formData.content}
+                value={formValues.content}
                 onChange={handleChange}
                 required
                 rows={10}
@@ -398,15 +437,36 @@ const PostFormPage = () => {
           </Box>
 
           {postType === 'REVIEW' && (
-            <Box sx={{ mb: 3 }}>
-              <Typography component="legend">별점</Typography>
-              <StyledRating
-                name="rating"
-                value={formData.rating}
-                onChange={handleRatingChange}
-                size="large"
-              />
-            </Box>
+            <>
+              <Box sx={{ mb: 2 }}>
+                <Typography component="legend">별점</Typography>
+                <StyledRating
+                  name="rating"
+                  value={formValues.rating}
+                  onChange={handleRatingChange}
+                  size="large"
+                />
+              </Box>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  카테고리 *
+                </label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                  required
+                >
+                  <option value="">카테고리 선택</option>
+                  {categories.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
           )}
 
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
@@ -428,7 +488,7 @@ const PostFormPage = () => {
 
       <ErrorAlert
         open={!!(boardError || postError || cosmeticsError)}
-        message={boardError || postError || cosmeticsError || ''}
+        message={boardError || postError || cosmeticsError || error}
         onClose={() => {
           clearBoardError();
           clearPostError();

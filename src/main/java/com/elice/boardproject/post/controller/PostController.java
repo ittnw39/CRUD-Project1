@@ -27,13 +27,13 @@ public class PostController {
 
     @GetMapping("/boards/{boardId}/posts")
     public ResponseEntity<Page<PostResponse>> getPosts(
-            @PathVariable Long boardId,
-            @RequestParam(required = false) PostType type,
-            @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "createdAt") String sort,
-            @RequestParam(defaultValue = "desc") String direction
+            @PathVariable(name = "boardId") Long boardId,
+            @RequestParam(name = "type", required = false) PostType type,
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "12") int size,
+            @RequestParam(name = "sort", defaultValue = "createdAt") String sort,
+            @RequestParam(name = "direction", defaultValue = "desc") String direction
     ) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction);
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
@@ -55,14 +55,14 @@ public class PostController {
     }
 
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<PostResponse> getPost(@PathVariable Long postId) {
+    public ResponseEntity<PostResponse> getPost(@PathVariable(name = "postId") Long postId) {
         return ResponseEntity.ok(postService.getPost(postId));
     }
 
     @PostMapping("/posts")
     public ResponseEntity<PostResponse> createPost(
             @RequestBody PostRequest request,
-            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @RequestParam(name = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal String email
     ) {
         log.debug("게시글 생성 요청 - 이메일: {}, 요청 데이터: {}", email, request);
@@ -73,9 +73,9 @@ public class PostController {
 
     @PutMapping("/posts/{postId}")
     public ResponseEntity<PostResponse> updatePost(
-            @PathVariable Long postId,
+            @PathVariable(name = "postId") Long postId,
             @RequestBody PostRequest request,
-            @RequestParam(required = false) List<MultipartFile> images,
+            @RequestParam(name = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal String email
     ) {
         return ResponseEntity.ok(postService.updatePost(postId, request, images, email));
@@ -83,7 +83,7 @@ public class PostController {
 
     @DeleteMapping("/posts/{postId}")
     public ResponseEntity<Void> deletePost(
-            @PathVariable Long postId,
+            @PathVariable(name = "postId") Long postId,
             @AuthenticationPrincipal String email
     ) {
         postService.deletePost(postId, email);

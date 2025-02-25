@@ -7,6 +7,7 @@ import com.elice.boardproject.common.exception.ErrorCode;
 import com.elice.boardproject.common.service.FileService;
 import com.elice.boardproject.post.dto.PostRequest;
 import com.elice.boardproject.post.dto.PostResponse;
+import com.elice.boardproject.post.dto.CosmeticInfo;
 import com.elice.boardproject.post.entity.Post;
 import com.elice.boardproject.post.entity.PostImage;
 import com.elice.boardproject.post.entity.PostType;
@@ -77,6 +78,12 @@ public class PostService {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 
+        // REVIEW 타입인 경우 화장품 정보 필수 체크
+        if (PostType.REVIEW.equals(request.getPostType()) && request.getCosmeticInfo() == null) {
+            log.error("리뷰 작성 시 화장품 정보가 누락되었습니다.");
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     log.error("사용자를 찾을 수 없음: {}", email);
@@ -91,24 +98,41 @@ public class PostService {
                 });
         log.debug("게시판 정보: {}", board.getId());
 
-        // 화장품 조회 (리뷰인 경우에만)
+        // 화장품 처리 (리뷰인 경우)
         Cosmetic cosmetic = null;
-        if (request.getCosmeticId() != null) {
-            cosmetic = cosmeticRepository.findById(request.getCosmeticId())
-                    .orElseThrow(() -> {
-                        log.error("화장품을 찾을 수 없음: {}", request.getCosmeticId());
-                        return new CustomException(ErrorCode.COSMETIC_NOT_FOUND);
+        if (PostType.REVIEW.equals(request.getPostType()) && request.getCosmeticInfo() != null) {
+            CosmeticInfo info = request.getCosmeticInfo();
+            
+            // 이미 등록된 화장품인지 확인
+            cosmetic = cosmeticRepository.findByCosmeticReportSeq(info.getCosmeticReportSeq())
+                    .orElseGet(() -> {
+                        // 새로운 화장품 정보 저장
+                        Cosmetic newCosmetic = new Cosmetic();
+                        newCosmetic.setCosmeticReportSeq(info.getCosmeticReportSeq());
+                        newCosmetic.setItemName(info.getItemName());
+                        newCosmetic.setEntpName(info.getEntpName());
+                        newCosmetic.setReportFlagName(info.getReportFlagName());
+                        newCosmetic.setItemPh(info.getItemPh());
+                        newCosmetic.setCosmeticStdName(info.getCosmeticStdName());
+                        newCosmetic.setSpf(info.getSpf());
+                        newCosmetic.setPa(info.getPa());
+                        newCosmetic.setUsageDosage(info.getUsageDosage());
+                        newCosmetic.setEffectYn1(info.getEffectYn1());
+                        newCosmetic.setEffectYn2(info.getEffectYn2());
+                        newCosmetic.setEffectYn3(info.getEffectYn3());
+                        newCosmetic.setWaterProofingName(info.getWaterProofingName());
+                        newCosmetic.setCategories(info.getCategories());
+                        return cosmeticRepository.save(newCosmetic);
                     });
+            
             log.debug("화장품 정보: {}", cosmetic.getId());
             
             // 리뷰 중복 검사
-            if (request.getPostType() == PostType.REVIEW) {
-                boolean exists = postRepository.existsByUserAndCosmeticAndPostType(
-                    user, cosmetic, PostType.REVIEW);
-                if (exists) {
-                    log.error("이미 작성한 리뷰가 존재합니다. 사용자: {}, 화장품: {}", user.getId(), cosmetic.getId());
-                    throw new CustomException(ErrorCode.DUPLICATE_REVIEW);
-                }
+            boolean exists = postRepository.existsByUserAndCosmeticAndPostType(
+                user, cosmetic, PostType.REVIEW);
+            if (exists) {
+                log.error("이미 작성한 리뷰가 존재합니다. 사용자: {}, 화장품: {}", user.getId(), cosmetic.getId());
+                throw new CustomException(ErrorCode.DUPLICATE_REVIEW);
             }
         }
 
@@ -121,6 +145,9 @@ public class PostService {
                 .user(user)
                 .cosmetic(cosmetic)
                 .build();
+
+        log.debug("생성된 게시글 정보 - postType: {}, cosmeticId: {}", post.getPostType(), 
+            post.getCosmetic() != null ? post.getCosmetic().getId() : "null");
 
         // 이미지 처리
         if (images != null && !images.isEmpty()) {
@@ -150,7 +177,12 @@ public class PostService {
         }
 
         board.incrementPostCount();
-        return PostResponse.from(postRepository.save(post));
+        Post savedPost = postRepository.save(post);
+        log.debug("저장된 게시글 정보 - id: {}, cosmeticId: {}", 
+            savedPost.getId(), 
+            savedPost.getCosmetic() != null ? savedPost.getCosmetic().getId() : "null");
+            
+        return PostResponse.from(savedPost);
     }
 
     @Transactional
@@ -166,9 +198,31 @@ public class PostService {
         }
 
         // 화장품 정보 업데이트 (리뷰인 경우)
-        if (request.getCosmeticId() != null) {
-            Cosmetic cosmetic = cosmeticRepository.findById(request.getCosmeticId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.COSMETIC_NOT_FOUND));
+        if (PostType.REVIEW.equals(request.getPostType()) && request.getCosmeticInfo() != null) {
+            CosmeticInfo info = request.getCosmeticInfo();
+            
+            // 이미 등록된 화장품인지 확인
+            Cosmetic cosmetic = cosmeticRepository.findByCosmeticReportSeq(info.getCosmeticReportSeq())
+                    .orElseGet(() -> {
+                        // 새로운 화장품 정보 저장
+                        Cosmetic newCosmetic = new Cosmetic();
+                        newCosmetic.setCosmeticReportSeq(info.getCosmeticReportSeq());
+                        newCosmetic.setItemName(info.getItemName());
+                        newCosmetic.setEntpName(info.getEntpName());
+                        newCosmetic.setReportFlagName(info.getReportFlagName());
+                        newCosmetic.setItemPh(info.getItemPh());
+                        newCosmetic.setCosmeticStdName(info.getCosmeticStdName());
+                        newCosmetic.setSpf(info.getSpf());
+                        newCosmetic.setPa(info.getPa());
+                        newCosmetic.setUsageDosage(info.getUsageDosage());
+                        newCosmetic.setEffectYn1(info.getEffectYn1());
+                        newCosmetic.setEffectYn2(info.getEffectYn2());
+                        newCosmetic.setEffectYn3(info.getEffectYn3());
+                        newCosmetic.setWaterProofingName(info.getWaterProofingName());
+                        newCosmetic.setCategories(info.getCategories());
+                        return cosmeticRepository.save(newCosmetic);
+                    });
+            
             post.setCosmetic(cosmetic);
         }
 

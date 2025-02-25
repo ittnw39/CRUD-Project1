@@ -54,6 +54,8 @@ public class Cosmetic {
 
     private String waterProofingName;    // 2호효능효과_자외선_내수성 (WATER_PROOFING_NAME)
 
+    private String categories;  // 추가: 화장품 카테고리
+
     @OneToMany(mappedBy = "cosmetic")
     private List<Post> posts = new ArrayList<>();
 
@@ -72,5 +74,9 @@ public class Cosmetic {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public void setCategories(String categories) {
+        this.categories = categories;
     }
 } 

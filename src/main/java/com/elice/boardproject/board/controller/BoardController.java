@@ -30,7 +30,7 @@ public class BoardController {
 
     // 게시판 상세 조회
     @GetMapping("/{id}")
-    public ResponseEntity<BoardResponseDto> getBoard(@PathVariable Long id) {
+    public ResponseEntity<BoardResponseDto> getBoard(@PathVariable(name = "id") Long id) {
         Board board = boardService.findById(id);
         return ResponseEntity.ok(BoardResponseDto.from(board));
     }
@@ -38,7 +38,7 @@ public class BoardController {
     // 카테고리별 게시판 조회
     @GetMapping("/category/{category}")
     public ResponseEntity<List<BoardResponseDto>> getBoardsByCategory(
-            @PathVariable BoardCategory category) {
+            @PathVariable(name = "category") BoardCategory category) {
         List<BoardResponseDto> boards = boardService.findByCategory(category).stream()
                 .map(BoardResponseDto::from)
                 .collect(Collectors.toList());
@@ -57,7 +57,7 @@ public class BoardController {
     // 게시판 수정
     @PutMapping("/{id}")
     public ResponseEntity<BoardResponseDto> updateBoard(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @Valid @RequestBody BoardRequestDto requestDto,
             @RequestHeader("X-USER-ID") Long userId) {
         Board board = boardService.update(id, requestDto, userId);
@@ -67,7 +67,7 @@ public class BoardController {
     // 게시판 활성화/비활성화
     @PatchMapping("/{id}/toggle-active")
     public ResponseEntity<BoardResponseDto> toggleBoardActive(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @RequestHeader("X-USER-ID") Long userId) {
         Board board = boardService.toggleActive(id, userId);
         return ResponseEntity.ok(BoardResponseDto.from(board));

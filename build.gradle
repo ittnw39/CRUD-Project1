@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.2.0'
 	id 'io.spring.dependency-management' version '1.1.4'
+	id 'org.flywaydb.flyway' version '9.22.3'
 }
 
 group = 'com.elice'
@@ -12,7 +13,11 @@ java {
 }
 
 compileJava {
-	options.compilerArgs += ['-parameters']
+	options.compilerArgs += [
+		'-parameters',
+		'-Xlint:unchecked',
+		'-Xlint:deprecation'
+	]
 }
 
 repositories {
@@ -54,8 +59,21 @@ dependencies {
 	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	
+	// Flyway
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-mysql'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// Flyway 설정 추가
+flyway {
+	url = 'jdbc:mysql://localhost:3306/glowgallery'
+	user = 'root'
+	password = '6989'
+	locations = ['classpath:db/migration']
+	driver = 'com.mysql.cj.jdbc.Driver'
 }

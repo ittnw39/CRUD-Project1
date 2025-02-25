@@ -1,6 +1,6 @@
 -- 관리자 계정 생성 (비밀번호: admin123)
 INSERT INTO users (email, password, nickname, role, provider_type, created_at, updated_at)
-VALUES ('admin@admin.com', '$2a$10$iaMPJvZpP2qN0XZ1yxXGhewG4.BqGxZza8yNpqpqZ6P6K8pQxHBie', '관리자', 'ADMIN', 'LOCAL', NOW(), NOW());
+VALUES ('admin@admin.com', '$2a$10$egsiy83qIKE3n5AyjV.6G.vzs5fX2.GHea5PAtaaIC3yhhNpnHfW.', '관리자', 'ADMIN', 'LOCAL', NOW(), NOW());
 
 -- 게시판 생성
 INSERT INTO boards (name, category, description, is_active, user_id, post_count, created_at, updated_at)

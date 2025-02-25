@@ -61,8 +61,15 @@ const CosmeticListPage = () => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
+    if (!searchQuery.trim()) {
+      return;
+    }
     setIsSearching(true);
-    await searchCosmetics(searchQuery.trim());
+    try {
+      await searchCosmetics(searchQuery.trim());
+    } catch (error) {
+      console.error('화장품 검색 중 오류 발생:', error);
+    }
     setIsSearching(false);
     setExpandedId(null);
   };
@@ -76,6 +83,37 @@ const CosmeticListPage = () => {
   const handleExpandClick = (e, cosmeticId) => {
     e.stopPropagation();
     setExpandedId(expandedId === cosmeticId ? null : cosmeticId);
+  };
+
+  const handleReviewClick = (e, cosmetic) => {
+    e.stopPropagation();
+    if (!cosmetic || !cosmetic.cosmeticReportSeq) {
+      console.error('화장품 정보가 없습니다:', cosmetic);
+      return;
+    }
+    
+    // 화장품 정보 검증
+    const cosmeticData = {
+      cosmeticReportSeq: cosmetic.cosmeticReportSeq,
+      itemName: cosmetic.itemName,
+      entpName: cosmetic.entpName,
+      cosmeticStdName: cosmetic.cosmeticStdName,
+      itemPh: cosmetic.itemPh,
+      spf: cosmetic.spf,
+      pa: cosmetic.pa,
+      usageDosage: cosmetic.usageDosage,
+      effectYn1: cosmetic.effectYn1,
+      effectYn2: cosmetic.effectYn2,
+      effectYn3: cosmetic.effectYn3,
+      waterProofingName: cosmetic.waterProofingName,
+      categories: cosmetic.categories
+    };
+    
+    // localStorage에 화장품 정보 임시 저장
+    localStorage.setItem('selectedCosmetic', JSON.stringify(cosmeticData));
+    
+    console.log('리뷰 작성 페이지로 이동:', cosmeticData);
+    navigate(`/posts/new?type=REVIEW&cosmeticId=${cosmetic.cosmeticReportSeq}&boardId=2`);
   };
 
   if (isLoading && !isSearching) return <LoadingSpinner />;
@@ -114,7 +152,7 @@ const CosmeticListPage = () => {
         <Grid container spacing={3}>
           {Array.isArray(cosmetics) && cosmetics.length > 0 ? (
             cosmetics.map((cosmetic) => (
-              <Grid item xs={12} sm={6} md={4} key={cosmetic.id}>
+              <Grid item xs={12} sm={6} md={4} key={cosmetic.id || `temp-${Math.random()}`}>
                 <Card 
                   sx={{ 
                     height: '100%',
@@ -242,12 +280,10 @@ const CosmeticListPage = () => {
 
                     <Button
                       variant="contained"
-                      fullWidth
+                      color="primary"
                       startIcon={<RateReviewIcon />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/posts/new?type=REVIEW&cosmeticId=${cosmetic.id}&boardId=2`);
-                      }}
+                      onClick={(e) => handleReviewClick(e, cosmetic)}
+                      sx={{ mt: 2 }}
                     >
                       리뷰 작성
                     </Button>
