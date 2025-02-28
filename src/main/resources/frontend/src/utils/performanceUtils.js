@@ -2,16 +2,15 @@ import { getCLS, getFID, getLCP } from 'web-vitals';
 
 /**
  * 성능 측정 결과를 로깅하는 함수
- * @param {string} metricName - 측정 지표 이름
+ * @param {string} componentName - 컴포넌트 이름 또는 컨텍스트
+ * @param {string} metric - 측정 지표 이름
  * @param {number} value - 측정값
- * @param {string} context - 측정 컨텍스트
  */
-export const logPerformanceMetric = (metricName, value, context = '') => {
+export const logPerformanceMetric = (componentName, metric, value) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[Performance] ${context ? `[${context}] ` : ''}${metricName}: ${value.toFixed(2)}ms`);
+    const formattedValue = typeof value === 'number' ? value.toFixed(2) : value;
+    console.log(`[Performance] [${componentName}] ${metric}: ${formattedValue}ms`);
   }
-  
-  // TODO: 프로덕션 환경에서는 성능 모니터링 서비스로 전송
 };
 
 /**
@@ -21,24 +20,43 @@ export const logPerformanceMetric = (metricName, value, context = '') => {
  * @param {number} actualDuration - 실제 렌더링 시간
  */
 export const handleProfilerRender = (id, phase, actualDuration) => {
-  logPerformanceMetric('renderDuration', actualDuration, id);
+  logPerformanceMetric(id, 'renderDuration', actualDuration);
 };
 
 /**
  * API 호출 시간을 측정하는 함수
  * @param {string} endpoint - API 엔드포인트
- * @param {number} startTime - 호출 시작 시간
+ * @param {function} apiCall - API 호출 함수
  */
-export const measureApiCall = (endpoint, startTime) => {
-  const duration = performance.now() - startTime;
-  logPerformanceMetric('apiCallDuration', duration, endpoint);
+export const measureApiCall = async (endpoint, apiCall) => {
+  if (typeof apiCall !== 'function') {
+    throw new Error('apiCall must be a function');
+  }
+
+  const startTime = performance.now();
+  try {
+    const result = await apiCall();
+    const duration = Math.max(0, performance.now() - startTime);
+    logPerformanceMetric('API', endpoint, duration);
+    return result;
+  } catch (error) {
+    const duration = Math.max(0, performance.now() - startTime);
+    logPerformanceMetric('API', `${endpoint} error`, duration);
+    throw error;
+  }
 };
 
 /**
  * 웹 바이탈 지표를 측정하는 함수
  */
 export const measureWebVitals = () => {
-  getCLS((metric) => logPerformanceMetric('CLS', metric.value * 1000, 'WebVitals'));
-  getFID((metric) => logPerformanceMetric('FID', metric.value, 'WebVitals'));
-  getLCP((metric) => logPerformanceMetric('LCP', metric.value, 'WebVitals'));
+  getCLS((metric) => {
+    logPerformanceMetric('WebVitals', 'CLS', metric.value);
+  });
+  getFID((metric) => {
+    logPerformanceMetric('WebVitals', 'FID', metric.value);
+  });
+  getLCP((metric) => {
+    logPerformanceMetric('WebVitals', 'LCP', metric.value);
+  });
 }; 
