@@ -24,9 +24,12 @@
 - [x] CosmeticSearchDialog 컴포넌트 리팩토링 (SOLID 원칙 적용)
   - [x] 컴포넌트 분리 (Header, Content, Footer)
   - [x] 상태 관리 로직 분리 (useSearchDialog)
+- [x] 에러 처리 개선
+  - [x] 에러 타입 정의 및 구분
+  - [x] 에러 메시지 표준화
+  - [x] 에러 로깅 구현
 
 ## 예정된 작업
-- [ ] 에러 처리 개선
 - [ ] 성능 모니터링 도구 추가
 - [ ] 접근성 (a11y) 개선
 - [ ] 국제화 (i18n) 지원 추가
@@ -37,6 +40,7 @@
   - [x] CosmeticSearchDialog
   - [x] CosmeticListItem
   - [x] 검색 관련 유틸리티 함수
+  - [x] 에러 처리 유틸리티 함수
 - [ ] 통합 테스트 작성
   - [ ] 검색 기능
   - [ ] 상태 관리

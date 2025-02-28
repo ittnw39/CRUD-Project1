@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import cosmeticService from '../services/api/cosmeticService';
 import { extractSpf, extractPa } from '../utils/cosmeticUtils';
+import { createError } from '../utils/errorUtils';
 
 /**
  * 화장품 상태 관리 스토어
@@ -33,8 +34,9 @@ const useCosmeticStore = create(
           const categories = await cosmeticService.getCategories();
           set({ categories, isLoading: false });
         } catch (error) {
+          const formattedError = createError(error, 'fetchCategories');
           set({ 
-            error: error.response?.data?.message || '카테고리 목록을 불러오는데 실패했습니다.',
+            error: formattedError,
             isLoading: false 
           });
         }
@@ -46,8 +48,9 @@ const useCosmeticStore = create(
           const cosmetics = await cosmeticService.searchCosmetics(searchParams);
           set({ cosmetics, isLoading: false });
         } catch (error) {
+          const formattedError = createError(error, 'fetchCosmetics');
           set({ 
-            error: error.response?.data?.message || '화장품 목록을 불러오는데 실패했습니다.',
+            error: formattedError,
             isLoading: false 
           });
         }
@@ -59,8 +62,10 @@ const useCosmeticStore = create(
           const currentCosmetic = await cosmeticService.getCosmeticById(cosmeticId);
           set({ currentCosmetic, isLoading: false });
         } catch (error) {
+          const formattedError = createError(error, 'fetchCosmetic');
           set({ 
-            error: error.response?.data?.message || '화장품 정보를 불러오는데 실패했습니다.',
+            error: formattedError,
+            currentCosmetic: null,
             isLoading: false 
           });
         }
