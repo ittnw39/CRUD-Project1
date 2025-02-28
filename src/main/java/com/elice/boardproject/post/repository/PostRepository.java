@@ -18,7 +18,59 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     void deleteById(Long id);
 
-    // 게시판 ID에 따라 게시글 목록을 찾는 메소드
+    // 게시판 ID에 따라 게시글 목록을 찾는 메소드 (페이지네이션)
+    @Query(value = "SELECT p FROM Post p " +
+           "WHERE p.board.id = :boardId " +
+           "ORDER BY p.createdAt DESC",
+           countQuery = "SELECT COUNT(p) FROM Post p WHERE p.board.id = :boardId")
+    Page<Post> findByBoardId(@Param("boardId") Long boardId, Pageable pageable);
+
+    // 게시판 ID와 타입으로 게시글 검색 (페이지네이션)
+    @Query(value = "SELECT p FROM Post p " +
+           "WHERE p.board.id = :boardId AND p.postType = :postType " +
+           "ORDER BY p.createdAt DESC",
+           countQuery = "SELECT COUNT(p) FROM Post p WHERE p.board.id = :boardId AND p.postType = :postType")
+    Page<Post> findByBoardIdAndPostType(@Param("boardId") Long boardId, 
+                                       @Param("postType") PostType postType, 
+                                       Pageable pageable);
+    
+    // 게시판 ID와 검색어로 게시글 검색 (제목, 내용, 태그 포함)
+    @Query(value = "SELECT DISTINCT p FROM Post p " +
+           "LEFT JOIN p.tags t " +
+           "WHERE p.board.id = :boardId " +
+           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(t.name) LIKE LOWER(CONCAT('%', :search, '%')))",
+           countQuery = "SELECT COUNT(DISTINCT p) FROM Post p " +
+           "LEFT JOIN p.tags t " +
+           "WHERE p.board.id = :boardId " +
+           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(t.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Post> searchByBoardId(@Param("boardId") Long boardId, 
+                              @Param("search") String search,
+                              Pageable pageable);
+
+    // 게시판 ID, 타입, 검색어로 게시글 검색
+    @Query(value = "SELECT DISTINCT p FROM Post p " +
+           "LEFT JOIN p.tags t " +
+           "WHERE p.board.id = :boardId " +
+           "AND p.postType = :postType " +
+           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(t.name) LIKE LOWER(CONCAT('%', :search, '%')))",
+           countQuery = "SELECT COUNT(DISTINCT p) FROM Post p " +
+           "LEFT JOIN p.tags t " +
+           "WHERE p.board.id = :boardId " +
+           "AND p.postType = :postType " +
+           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(t.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Post> searchByBoardIdAndType(@Param("boardId") Long boardId,
+                                     @Param("postType") PostType postType,
+                                     @Param("search") String search,
+                                     Pageable pageable);
+
     List<Post> findByBoardId(Long boardId);
 
     Page<Post> findAllByBoardId(Long boardId, Pageable pageable);
@@ -26,8 +78,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByCosmeticId(Long cosmeticId);
 
     Page<Post> findByCosmeticId(Long cosmeticId, Pageable pageable);
-
-    Page<Post> findByBoardId(Long boardId, Pageable pageable);
 
     Page<Post> findByUserId(Long userId, Pageable pageable);
 
@@ -41,33 +91,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("SELECT COUNT(p) FROM Post p WHERE p.cosmetic.id = :cosmeticId AND p.rating = :rating AND p.postType = 'REVIEW'")
     Long countByRatingAndCosmeticId(@Param("rating") Integer rating, @Param("cosmeticId") Long cosmeticId);
-
-    // 게시판 ID와 타입으로 게시글 검색 (페이지네이션)
-    Page<Post> findByBoardIdAndPostType(Long boardId, PostType postType, Pageable pageable);
-    
-    // 게시판 ID와 검색어로 게시글 검색 (제목, 내용, 태그 포함)
-    @Query("SELECT DISTINCT p FROM Post p " +
-           "LEFT JOIN p.tags t " +
-           "WHERE p.board.id = :boardId " +
-           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(t.name) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<Post> searchByBoardId(@Param("boardId") Long boardId, 
-                              @Param("search") String search,
-                              Pageable pageable);
-
-    // 게시판 ID, 타입, 검색어로 게시글 검색
-    @Query("SELECT DISTINCT p FROM Post p " +
-           "LEFT JOIN p.tags t " +
-           "WHERE p.board.id = :boardId " +
-           "AND p.postType = :postType " +
-           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(t.name) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<Post> searchByBoardIdAndType(@Param("boardId") Long boardId,
-                                     @Param("postType") PostType postType,
-                                     @Param("search") String search,
-                                     Pageable pageable);
 
     // 게시판 통계
     @Query("SELECT COUNT(p) FROM Post p WHERE p.board.id = :boardId")

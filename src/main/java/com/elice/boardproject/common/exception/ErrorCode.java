@@ -26,6 +26,7 @@ public enum ErrorCode {
     // Cosmetic
     COSMETIC_NOT_FOUND(HttpStatus.NOT_FOUND, "화장품을 찾을 수 없습니다."),
     DUPLICATE_REVIEW(HttpStatus.CONFLICT, "이미 리뷰를 작성했습니다."),
+    COSMETIC_NOT_SELECTED(HttpStatus.BAD_REQUEST, "화장품을 선택해주세요."),
     
     // Comment
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),

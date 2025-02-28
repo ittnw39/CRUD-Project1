@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 import axios from '../services/api/axios';
 
 const usePostStore = create((set) => ({
@@ -13,23 +13,29 @@ const usePostStore = create((set) => ({
     try {
       const queryParams = new URLSearchParams();
       
-      // 페이지네이션 파라미터
-      if (params.page !== undefined) queryParams.append('page', params.page);
-      if (params.size !== undefined) queryParams.append('size', params.size);
+      // 페이지네이션 파라미터 (기본값 설정)
+      const page = params.page !== undefined ? params.page - 1 : 0; // Spring Data JPA는 0-based pagination 사용
+      const size = params.size || 10;
+      queryParams.append('page', page);
+      queryParams.append('size', size);
       
       // 정렬 파라미터
-      if (params.sort && params.direction) {
-        queryParams.append('sort', `${params.sort},${params.direction}`);
+      if (params.sort) {
+        queryParams.append('sort', params.sort);
       }
       
       // 필터 파라미터
-      if (params.type) queryParams.append('type', params.type);
-      if (params.search) queryParams.append('search', params.search);
+      if (params.type && params.type !== 'all') {
+        queryParams.append('type', params.type);
+      }
+      if (params.search && params.search.trim()) {
+        queryParams.append('search', params.search.trim());
+      }
 
       const response = await axios.get(`/api/boards/${boardId}/posts?${queryParams.toString()}`);
       set({ 
-        posts: response.data.content,
-        totalElements: response.data.totalElements,
+        posts: response.data.content || [],
+        totalElements: response.data.totalElements || 0,
         isLoading: false 
       });
     } catch (error) {
@@ -53,20 +59,12 @@ const usePostStore = create((set) => ({
     }
   },
 
-  createPost: async (postData, images) => {
+  createPost: async (postData) => {
     set({ isLoading: true, error: null });
     try {
-      const formData = new FormData();
-      
-      if (images && images.length > 0) {
-        images.forEach(image => {
-          formData.append('images', image);
-        });
-      }
-
       const response = await axios.post('/api/posts', postData, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'multipart/form-data'
         }
       });
       
@@ -78,23 +76,17 @@ const usePostStore = create((set) => ({
         error: error.response?.data?.message || '게시글 작성에 실패했습니다.',
         isLoading: false 
       });
-      return null;
+      throw error;
     }
   },
 
-  updatePost: async (postId, postData, images) => {
+  updatePost: async (postId, postData) => {
     set({ isLoading: true, error: null });
     try {
-      const formData = new FormData();
-      
-      if (images && images.length > 0) {
-        images.forEach(image => {
-          formData.append('images', image);
-        });
-      }
-
       const response = await axios.put(`/api/posts/${postId}`, postData, {
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
       
       set(state => ({
@@ -104,13 +96,13 @@ const usePostStore = create((set) => ({
         currentPost: response.data,
         isLoading: false
       }));
-      return true;
+      return response.data;
     } catch (error) {
       set({ 
         error: error.response?.data?.message || '게시글 수정에 실패했습니다.',
         isLoading: false 
       });
-      return false;
+      throw error;
     }
   },
 

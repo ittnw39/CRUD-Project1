@@ -22,13 +22,19 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 50MB
+      enabled: true
+      location: ${java.io.tmpdir}
   profiles:
     active: local
   mvc:
-    static-path-pattern: /uploads/**
+    static-path-pattern: /**
   web:
     resources:
-      static-locations: file:./uploads/
+      static-locations: 
+        - classpath:/static/
+        - file:${file.upload-dir}/
+      cache:
+        period: 3600
   main:
     allow-bean-definition-overriding: true
   security:
@@ -62,4 +68,4 @@ jwt:
   refresh-token-validity-in-seconds: 604800
 
 file:
-  upload-dir: uploads 
+  upload-dir: ${user.dir}/uploads 

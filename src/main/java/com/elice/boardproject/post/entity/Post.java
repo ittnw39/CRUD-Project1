@@ -127,15 +127,15 @@ public class Post {
         tag.getPosts().remove(this);
     }
 
-    public void incrementViewCount() {
-        this.viewCount++;
-    }
-
     // 수정 메서드
     public void update(String title, String content, Integer rating) {
         this.title = title;
         this.content = content;
         this.rating = rating;
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
     }
 
     public void setCosmetic(Cosmetic cosmetic) {

@@ -21,6 +21,7 @@ import {
   Announcement as AnnouncementIcon
 } from '@mui/icons-material';
 import useBoardStore from '../../store/boardStore';
+import useCosmeticStore from '../../store/cosmeticStore';
 
 const SidebarContainer = styled(Box)(({ theme }) => ({
   width: 280,
@@ -49,11 +50,13 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState({});
   const { boards, fetchBoards } = useBoardStore();
-  const [categories, setCategories] = useState([]);
+  const { categories, fetchCategories } = useCosmeticStore();
+  const [menuCategories, setMenuCategories] = useState([]);
 
   useEffect(() => {
     fetchBoards();
-  }, [fetchBoards]);
+    fetchCategories();
+  }, [fetchBoards, fetchCategories]);
 
   useEffect(() => {
     const boardCategory = {
@@ -72,16 +75,19 @@ const Sidebar = () => {
       id: 'cosmetics',
       name: '화장품 카테고리',
       icon: <CategoryIcon />,
-      items: [
-        { id: 'skincare', name: '스킨케어', icon: <StarIcon />, path: '/cosmetics?category=SKINCARE' },
-        { id: 'makeup', name: '메이크업', icon: <StarIcon />, path: '/cosmetics?category=MAKEUP' },
-        { id: 'bodycare', name: '바디케어', icon: <StarIcon />, path: '/cosmetics?category=BODYCARE' },
-        { id: 'suncare', name: '선케어', icon: <StarIcon />, path: '/cosmetics?category=SUNCARE' }
-      ]
+      items: categories.map(category => ({
+        id: category.toLowerCase(),
+        name: category === 'SKINCARE' ? '스킨케어' :
+             category === 'MAKEUP' ? '메이크업' :
+             category === 'BODYCARE' ? '바디케어' :
+             category === 'SUNCARE' ? '선케어' : category,
+        icon: <StarIcon />,
+        path: `/cosmetics?category=${category}`
+      }))
     };
 
-    setCategories([boardCategory, cosmeticCategory]);
-  }, [boards]);
+    setMenuCategories([boardCategory, cosmeticCategory]);
+  }, [boards, categories]);
 
   const handleToggle = (categoryId) => {
     setExpanded(prev => ({
@@ -102,7 +108,7 @@ const Sidebar = () => {
         </Typography>
       </Box>
       <List component="nav">
-        {categories.map((category) => (
+        {menuCategories.map((category) => (
           <React.Fragment key={category.id}>
             <ListItemButton onClick={() => handleToggle(category.id)}>
               <ListItemIcon>{category.icon}</ListItemIcon>

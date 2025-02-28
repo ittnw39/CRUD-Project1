@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 import axios from '../services/api/axios';
 
 // SPF 추출 함수
@@ -76,8 +76,33 @@ const extractPa = (itemName) => {
 const useCosmeticStore = create((set) => ({
   cosmetics: [],
   currentCosmetic: null,
+  selectedCosmetic: null,  // 선택된 화장품 정보
+  categories: [],
   isLoading: false,
   error: null,
+
+  setSelectedCosmetic: (cosmetic) => {
+    console.log('선택된 화장품 저장:', cosmetic);
+    set({ selectedCosmetic: cosmetic });
+  },
+
+  getSelectedCosmetic: () => {
+    const state = useCosmeticStore.getState();
+    return state.selectedCosmetic;
+  },
+
+  fetchCategories: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get('/api/cosmetics/categories');
+      set({ categories: response.data, isLoading: false });
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || '카테고리 목록을 불러오는데 실패했습니다.',
+        isLoading: false 
+      });
+    }
+  },
 
   fetchCosmetics: async (searchParams) => {
     set({ isLoading: true, error: null });
@@ -183,6 +208,7 @@ const useCosmeticStore = create((set) => ({
     }
   },
 
+  clearSelectedCosmetic: () => set({ selectedCosmetic: null }),
   clearError: () => set({ error: null })
 }));
 

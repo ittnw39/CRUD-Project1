@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 import axios from '../services/api/axios';
 
 const useCommentStore = create((set) => ({
@@ -9,8 +9,8 @@ const useCommentStore = create((set) => ({
   fetchComments: async (postId) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get(`/api/posts/${postId}/comments`);
-      set({ comments: response.data, isLoading: false });
+      const response = await axios.get(`/api/comments/post/${postId}`);
+      set({ comments: response.data || [], isLoading: false });
     } catch (error) {
       set({ 
         error: error.response?.data?.message || '댓글을 불러오는데 실패했습니다.',
@@ -22,7 +22,10 @@ const useCommentStore = create((set) => ({
   createComment: async (postId, content) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`/api/posts/${postId}/comments`, { content });
+      const response = await axios.post(`/api/comments`, { 
+        postId,
+        content 
+      });
       set(state => ({
         comments: [...state.comments, response.data],
         isLoading: false

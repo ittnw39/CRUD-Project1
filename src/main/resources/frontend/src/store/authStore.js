@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 import axios from '../services/api/axios';
 
 const useAuthStore = create((set) => ({

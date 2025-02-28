@@ -1,7 +1,7 @@
 package com.elice.boardproject.user.entity;
 
 import com.elice.boardproject.post.entity.Post;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.elice.boardproject.comment.entity.Comment;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -45,16 +45,23 @@ public class User {
     @Column
     private String providerId;
 
-    @Column
+    @Column(name = "profile_image")
     private String profileImage;
 
     @Column
     private String refreshToken;
 
-    @OneToMany(mappedBy = "user")
+    @Column(nullable = false)
     @Builder.Default
-    @JsonManagedReference
+    private boolean isAdmin = false;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<Post> posts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Builder.Default
+    private List<Comment> comments = new ArrayList<>();
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
@@ -88,6 +95,11 @@ public class User {
     }
 
     public void updateProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    public void updateProfile(String nickname, String profileImage) {
+        this.nickname = nickname;
         this.profileImage = profileImage;
     }
 } 

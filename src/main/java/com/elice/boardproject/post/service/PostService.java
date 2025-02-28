@@ -43,23 +43,61 @@ public class PostService {
     private static final Logger log = LoggerFactory.getLogger(PostService.class);
 
     public Page<PostResponse> getPostsByBoardId(Long boardId, Pageable pageable) {
-        return postRepository.findByBoardId(boardId, pageable)
-                .map(PostResponse::from);
+        log.debug("게시글 목록 조회 시작 - boardId: {}, page: {}, size: {}", 
+            boardId, pageable.getPageNumber(), pageable.getPageSize());
+            
+        Page<Post> posts = postRepository.findByBoardId(boardId, pageable);
+        
+        log.debug("조회된 게시글 수: {}, 총 페이지: {}", 
+            posts.getNumberOfElements(), posts.getTotalPages());
+            
+        return posts.map(PostResponse::from);
     }
 
     public Page<PostResponse> getPostsByBoardIdAndType(Long boardId, PostType type, Pageable pageable) {
-        return postRepository.findByBoardIdAndPostType(boardId, type, pageable)
-                .map(PostResponse::from);
+        log.debug("타입별 게시글 목록 조회 시작 - boardId: {}, type: {}, page: {}, size: {}", 
+            boardId, type, pageable.getPageNumber(), pageable.getPageSize());
+            
+        Page<Post> posts = postRepository.findByBoardIdAndPostType(boardId, type, pageable);
+        
+        log.debug("조회된 게시글 수: {}, 총 페이지: {}", 
+            posts.getNumberOfElements(), posts.getTotalPages());
+            
+        return posts.map(PostResponse::from);
     }
 
     public Page<PostResponse> searchPostsByBoardId(Long boardId, String search, Pageable pageable) {
-        return postRepository.searchByBoardId(boardId, search, pageable)
-                .map(PostResponse::from);
+        log.debug("게시글 검색 시작 - boardId: {}, search: {}, page: {}, size: {}", 
+            boardId, search, pageable.getPageNumber(), pageable.getPageSize());
+            
+        Page<Post> posts = postRepository.searchByBoardId(boardId, search, pageable);
+        
+        log.debug("검색된 게시글 수: {}, 총 페이지: {}", 
+            posts.getNumberOfElements(), posts.getTotalPages());
+            
+        return posts.map(post -> {
+            PostResponse response = PostResponse.from(post);
+            log.debug("변환된 게시글 정보 - id: {}, title: {}, type: {}", 
+                post.getId(), post.getTitle(), post.getPostType());
+            return response;
+        });
     }
 
     public Page<PostResponse> searchPostsByBoardIdAndType(Long boardId, PostType type, String search, Pageable pageable) {
-        return postRepository.searchByBoardIdAndType(boardId, type, search, pageable)
-                .map(PostResponse::from);
+        log.debug("타입별 게시글 검색 시작 - boardId: {}, type: {}, search: {}, page: {}, size: {}", 
+            boardId, type, search, pageable.getPageNumber(), pageable.getPageSize());
+            
+        Page<Post> posts = postRepository.searchByBoardIdAndType(boardId, type, search, pageable);
+        
+        log.debug("검색된 게시글 수: {}, 총 페이지: {}", 
+            posts.getNumberOfElements(), posts.getTotalPages());
+            
+        return posts.map(post -> {
+            PostResponse response = PostResponse.from(post);
+            log.debug("변환된 게시글 정보 - id: {}, title: {}, type: {}", 
+                post.getId(), post.getTitle(), post.getPostType());
+            return response;
+        });
     }
 
     public PostResponse getPost(Long postId) {
@@ -67,6 +105,12 @@ public class PostService {
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
         post.incrementViewCount();
         return PostResponse.from(postRepository.save(post));
+    }
+
+    private void checkNoticePermission(User user, PostType postType) {
+        if (postType == PostType.NOTICE && !user.isAdmin()) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
     }
 
     @Transactional
@@ -78,18 +122,20 @@ public class PostService {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 
-        // REVIEW 타입인 경우 화장품 정보 필수 체크
-        if (PostType.REVIEW.equals(request.getPostType()) && request.getCosmeticInfo() == null) {
-            log.error("리뷰 작성 시 화장품 정보가 누락되었습니다.");
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
-        }
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     log.error("사용자를 찾을 수 없음: {}", email);
                     return new CustomException(ErrorCode.USER_NOT_FOUND);
                 });
         log.debug("게시글 작성자 정보: {}", user.getId());
+
+        checkNoticePermission(user, request.getPostType());
+
+        // REVIEW 타입인 경우 화장품 정보 필수 체크
+        if (PostType.REVIEW.equals(request.getPostType()) && request.getCosmeticInfo() == null) {
+            log.error("리뷰 작성 시 화장품 정보가 누락되었습니다.");
+            throw new CustomException(ErrorCode.COSMETIC_NOT_SELECTED);
+        }
 
         Board board = boardRepository.findById(request.getBoardId())
                 .orElseThrow(() -> {
@@ -205,8 +251,10 @@ public class PostService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!post.getUser().getId().equals(user.getId())) {
-            throw new CustomException(ErrorCode.NOT_POST_OWNER);
+        checkNoticePermission(user, post.getPostType());
+        
+        if (!post.getUser().getId().equals(user.getId()) && !user.isAdmin()) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
         // 화장품 정보 업데이트 (리뷰인 경우)
@@ -289,8 +337,10 @@ public class PostService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!post.getUser().getId().equals(user.getId())) {
-            throw new CustomException(ErrorCode.NOT_POST_OWNER);
+        checkNoticePermission(user, post.getPostType());
+        
+        if (!post.getUser().getId().equals(user.getId()) && !user.isAdmin()) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
         // 이미지 파일 삭제

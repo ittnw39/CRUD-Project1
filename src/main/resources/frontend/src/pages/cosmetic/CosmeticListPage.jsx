@@ -57,7 +57,15 @@ const CosmeticListPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
-  const { cosmetics, searchCosmetics, isLoading, error, clearError } = useStore();
+  const { 
+    cosmetics, 
+    searchCosmetics, 
+    setSelectedCosmetic,
+    isLoading, 
+    error, 
+    clearError 
+  } = useStore();
+  const [reviewBoardId, setReviewBoardId] = useState(2);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -85,35 +93,10 @@ const CosmeticListPage = () => {
     setExpandedId(expandedId === cosmeticId ? null : cosmeticId);
   };
 
-  const handleReviewClick = (e, cosmetic) => {
-    e.stopPropagation();
-    if (!cosmetic || !cosmetic.cosmeticReportSeq) {
-      console.error('화장품 정보가 없습니다:', cosmetic);
-      return;
-    }
-    
-    // 화장품 정보 검증
-    const cosmeticData = {
-      cosmeticReportSeq: cosmetic.cosmeticReportSeq,
-      itemName: cosmetic.itemName,
-      entpName: cosmetic.entpName,
-      cosmeticStdName: cosmetic.cosmeticStdName,
-      itemPh: cosmetic.itemPh,
-      spf: cosmetic.spf,
-      pa: cosmetic.pa,
-      usageDosage: cosmetic.usageDosage,
-      effectYn1: cosmetic.effectYn1,
-      effectYn2: cosmetic.effectYn2,
-      effectYn3: cosmetic.effectYn3,
-      waterProofingName: cosmetic.waterProofingName,
-      categories: cosmetic.categories
-    };
-    
-    // localStorage에 화장품 정보 임시 저장
-    localStorage.setItem('selectedCosmetic', JSON.stringify(cosmeticData));
-    
-    console.log('리뷰 작성 페이지로 이동:', cosmeticData);
-    navigate(`/posts/new?type=REVIEW&cosmeticId=${cosmetic.cosmeticReportSeq}&boardId=2`);
+  const handleReviewClick = (cosmetic) => {
+    console.log('리뷰 작성 페이지로 이동:', cosmetic);
+    setSelectedCosmetic(cosmetic);  // cosmeticStore의 함수 사용
+    navigate(`/posts/new?boardId=${reviewBoardId}&cosmeticId=${cosmetic.cosmeticReportSeq}&type=REVIEW`);
   };
 
   if (isLoading && !isSearching) return <LoadingSpinner />;
@@ -282,7 +265,7 @@ const CosmeticListPage = () => {
                       variant="contained"
                       color="primary"
                       startIcon={<RateReviewIcon />}
-                      onClick={(e) => handleReviewClick(e, cosmetic)}
+                      onClick={() => handleReviewClick(cosmetic)}
                       sx={{ mt: 2 }}
                     >
                       리뷰 작성

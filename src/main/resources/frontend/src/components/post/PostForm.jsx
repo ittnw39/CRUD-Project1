@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   TextField,
   Button,
@@ -10,7 +10,11 @@ import {
   Stack,
   ImageList,
   ImageListItem,
-  ImageListItemBar
+  ImageListItemBar,
+  FormControl,
+  Select,
+  MenuItem,
+  InputLabel
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -24,19 +28,18 @@ const PostForm = ({
     content: '',
     rating: 0,
     tags: [],
-    images: []
+    images: [],
+    cosmeticType: ''
   },
   postType,
+  selectedCosmetic,
+  cosmetics = [],
   onSubmit,
   isLoading
 }) => {
   const [formData, setFormData] = useState(initialData);
   const [tagInput, setTagInput] = useState('');
   const [previewImages, setPreviewImages] = useState([]);
-
-  useEffect(() => {
-    setFormData(initialData);
-  }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,7 +49,7 @@ const PostForm = ({
     }));
   };
 
-  const handleRatingChange = (value) => {
+  const handleRatingChange = (_, value) => {
     setFormData(prev => ({
       ...prev,
       rating: value
@@ -76,7 +79,25 @@ const PostForm = ({
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    const newPreviewImages = files.map(file => ({
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+
+    // 파일 유효성 검사
+    const validFiles = files.filter(file => {
+      if (!allowedTypes.includes(file.type)) {
+        alert(`지원하지 않는 파일 형식입니다: ${file.type}\n지원되는 형식: jpg, png, gif`);
+        return false;
+      }
+      if (file.size > maxSize) {
+        alert(`파일 크기가 너무 큽니다: ${(file.size / 1024 / 1024).toFixed(2)}MB\n최대 크기: 5MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    const newPreviewImages = validFiles.map(file => ({
       file,
       preview: URL.createObjectURL(file)
     }));
@@ -84,7 +105,7 @@ const PostForm = ({
     setPreviewImages(prev => [...prev, ...newPreviewImages]);
     setFormData(prev => ({
       ...prev,
-      images: [...prev.images, ...files]
+      images: [...(prev.images || []), ...validFiles]
     }));
   };
 
@@ -127,15 +148,56 @@ const PostForm = ({
       />
 
       {postType === 'REVIEW' && (
-        <Box sx={{ mb: 3 }}>
-          <Typography component="legend">별점</Typography>
-          <Rating
-            name="rating"
-            value={formData.rating}
-            onChange={(_, value) => handleRatingChange(value)}
-            size="large"
-          />
-        </Box>
+        <>
+          <Box sx={{ mb: 3 }}>
+            <Typography component="legend">별점</Typography>
+            <Rating
+              name="rating"
+              value={formData.rating}
+              onChange={handleRatingChange}
+              size="large"
+            />
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <FormControl fullWidth>
+              <InputLabel>화장품 카테고리</InputLabel>
+              <Select
+                name="cosmeticType"
+                value={formData.cosmeticType}
+                onChange={handleChange}
+                label="화장품 카테고리"
+                required
+              >
+                <MenuItem value="SKINCARE">스킨케어</MenuItem>
+                <MenuItem value="BODYCARE">바디케어</MenuItem>
+                <MenuItem value="SUNCARE">선케어</MenuItem>
+                <MenuItem value="MAKEUP">메이크업</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+
+          {cosmetics.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel>리뷰할 화장품</InputLabel>
+                <Select
+                  name="selectedCosmetic"
+                  value={selectedCosmetic}
+                  onChange={handleChange}
+                  label="리뷰할 화장품"
+                  required
+                >
+                  {cosmetics.map((cosmetic) => (
+                    <MenuItem key={cosmetic.cosmeticReportSeq} value={cosmetic.cosmeticReportSeq}>
+                      {cosmetic.itemName} ({cosmetic.entpName})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+        </>
       )}
 
       <Box sx={{ mb: 3 }}>

@@ -2,13 +2,16 @@ package com.elice.boardproject.cosmetic.controller;
 
 import com.elice.boardproject.cosmetic.dto.CosmeticListResponse;
 import com.elice.boardproject.cosmetic.entity.Cosmetic;
+import com.elice.boardproject.cosmetic.entity.CosmeticType;
 import com.elice.boardproject.cosmetic.service.CosmeticService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/cosmetics")
@@ -49,5 +52,13 @@ public class CosmeticController {
     @GetMapping("/sunscreens")
     public List<Cosmetic> getSunscreenProducts() {
         return cosmeticService.getSunscreenProducts();
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getCategories() {
+        List<String> categories = Arrays.stream(CosmeticType.values())
+                .map(Enum::name)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(categories);
     }
 }
