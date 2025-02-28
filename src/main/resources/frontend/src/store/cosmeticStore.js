@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import axios from '../services/api/axios';
+import { devtools } from 'zustand/middleware';
+import cosmeticService from '../services/api/cosmeticService';
 
 // SPF 추출 함수
 const extractSpf = (itemName) => {
@@ -73,143 +74,95 @@ const extractPa = (itemName) => {
   return null;
 };
 
-const useCosmeticStore = create((set) => ({
-  cosmetics: [],
-  currentCosmetic: null,
-  selectedCosmetic: null,  // 선택된 화장품 정보
-  categories: [],
-  isLoading: false,
-  error: null,
+/**
+ * 화장품 상태 관리 스토어
+ */
+const useCosmeticStore = create(
+  devtools(
+    (set, get) => ({
+      // 상태
+      cosmetics: [],
+      currentCosmetic: null,
+      selectedCosmetic: null,
+      categories: [],
+      isLoading: false,
+      error: null,
 
-  setSelectedCosmetic: (cosmetic) => {
-    console.log('선택된 화장품 저장:', cosmetic);
-    set({ selectedCosmetic: cosmetic });
-  },
+      // 액션
+      setSelectedCosmetic: (cosmetic) => {
+        set({ selectedCosmetic: cosmetic });
+      },
 
-  getSelectedCosmetic: () => {
-    const state = useCosmeticStore.getState();
-    return state.selectedCosmetic;
-  },
+      clearSelectedCosmetic: () => set({ selectedCosmetic: null }),
 
-  fetchCategories: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await axios.get('/api/cosmetics/categories');
-      set({ categories: response.data, isLoading: false });
-    } catch (error) {
-      set({ 
-        error: error.response?.data?.message || '카테고리 목록을 불러오는데 실패했습니다.',
-        isLoading: false 
-      });
-    }
-  },
+      clearError: () => set({ error: null }),
 
-  fetchCosmetics: async (searchParams) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await axios.get('/api/cosmetics/search', { params: searchParams });
-      
-      console.log('화장품 목록 응답:', response.data);
-      
-      // DB에서 가져온 화장품 데이터 처리
-      const formattedCosmetics = response.data.map((item) => {
-        const extractedSpf = item.spf || extractSpf(item.itemName);
-        const extractedPa = item.pa || extractPa(item.itemName);
-        
-        return {
-          id: item.id,
-          cosmeticReportSeq: item.cosmeticReportSeq,
-          itemName: item.itemName,
-          entpName: item.entpName,
-          reportFlagName: item.reportFlagName,
-          itemPh: item.itemPh,
-          cosmeticStdName: item.cosmeticStdName,
-          spf: extractedSpf,
-          pa: extractedPa,
-          usageDosage: item.usageDosage,
-          effectYn1: item.effectYn1,
-          effectYn2: item.effectYn2,
-          effectYn3: item.effectYn3,
-          waterProofingName: item.waterProofingName,
-          reviewCount: item.reviewCount || 0,
-          averageRating: item.averageRating || 0
-        };
-      });
-
-      console.log('변환된 화장품 데이터:', formattedCosmetics);
-      set({ cosmetics: formattedCosmetics, isLoading: false });
-    } catch (error) {
-      console.error('목록 조회 에러:', error);
-      set({ 
-        error: error.response?.data?.message || '화장품 목록을 불러오는데 실패했습니다.',
-        isLoading: false 
-      });
-    }
-  },
-
-  fetchCosmetic: async (cosmeticId) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await axios.get(`/api/cosmetics/${cosmeticId}`);
-      set({ currentCosmetic: response.data, isLoading: false });
-    } catch (error) {
-      set({ 
-        error: error.response?.data?.message || '화장품 정보를 불러오는데 실패했습니다.',
-        isLoading: false 
-      });
-    }
-  },
-
-  searchCosmetics: async (searchQuery) => {
-    set({ isLoading: true, error: null });
-    try {
-      console.log('검색어:', searchQuery);
-      const response = await axios.get('/api/cosmetics/search', {
-        params: {
-          item_name: searchQuery
+      // API 액션
+      fetchCategories: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const categories = await cosmeticService.getCategories();
+          set({ categories, isLoading: false });
+        } catch (error) {
+          set({ 
+            error: error.response?.data?.message || '카테고리 목록을 불러오는데 실패했습니다.',
+            isLoading: false 
+          });
         }
-      });
+      },
+
+      fetchCosmetics: async (searchParams) => {
+        set({ isLoading: true, error: null });
+        try {
+          const cosmetics = await cosmeticService.searchCosmetics(searchParams);
+          set({ cosmetics, isLoading: false });
+        } catch (error) {
+          set({ 
+            error: error.response?.data?.message || '화장품 목록을 불러오는데 실패했습니다.',
+            isLoading: false 
+          });
+        }
+      },
+
+      fetchCosmetic: async (cosmeticId) => {
+        set({ isLoading: true, error: null });
+        try {
+          const currentCosmetic = await cosmeticService.getCosmeticById(cosmeticId);
+          set({ currentCosmetic, isLoading: false });
+        } catch (error) {
+          set({ 
+            error: error.response?.data?.message || '화장품 정보를 불러오는데 실패했습니다.',
+            isLoading: false 
+          });
+        }
+      },
+
+      // 선택자
+      getSelectedCosmetic: () => get().selectedCosmetic,
       
-      console.log('검색 응답:', response.data);
+      getIsLoading: () => get().isLoading,
       
-      // DB에서 가져온 화장품 데이터 처리
-      const formattedCosmetics = response.data.map((item) => {
-        const extractedSpf = item.spf || extractSpf(item.itemName);
-        const extractedPa = item.pa || extractPa(item.itemName);
+      getError: () => get().error,
+      
+      getCosmeticById: (cosmeticId) => 
+        get().cosmetics.find(cosmetic => cosmetic.id === cosmeticId),
+      
+      getFilteredCosmetics: (searchTerm) => {
+        const { cosmetics } = get();
+        if (!searchTerm) return cosmetics;
         
-        return {
-          id: item.id,
-          cosmeticReportSeq: item.cosmeticReportSeq,
-          itemName: item.itemName,
-          entpName: item.entpName,
-          reportFlagName: item.reportFlagName,
-          itemPh: item.itemPh,
-          cosmeticStdName: item.cosmeticStdName,
-          spf: extractedSpf,
-          pa: extractedPa,
-          usageDosage: item.usageDosage,
-          effectYn1: item.effectYn1,
-          effectYn2: item.effectYn2,
-          effectYn3: item.effectYn3,
-          waterProofingName: item.waterProofingName,
-          reviewCount: item.reviewCount || 0,
-          averageRating: item.averageRating || 0
-        };
-      });
-
-      console.log('변환된 검색 결과:', formattedCosmetics);
-      set({ cosmetics: formattedCosmetics, isLoading: false });
-    } catch (error) {
-      console.error('검색 에러:', error);
-      set({ 
-        error: error.response?.data?.message || '화장품 검색에 실패했습니다.',
-        isLoading: false 
-      });
+        const term = searchTerm.toLowerCase();
+        return cosmetics.filter(cosmetic => 
+          cosmetic.itemName.toLowerCase().includes(term) ||
+          cosmetic.entpName.toLowerCase().includes(term)
+        );
+      }
+    }),
+    {
+      name: 'CosmeticStore',
+      enabled: process.env.NODE_ENV === 'development'
     }
-  },
-
-  clearSelectedCosmetic: () => set({ selectedCosmetic: null }),
-  clearError: () => set({ error: null })
-}));
+  )
+);
 
 export default useCosmeticStore; 
