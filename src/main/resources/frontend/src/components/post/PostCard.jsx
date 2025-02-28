@@ -12,6 +12,7 @@ import {
   Avatar
 } from '@mui/material';
 import { AccessTime as AccessTimeIcon } from '@mui/icons-material';
+import { getImageUrl } from '../../utils/imageUtils';
 
 const PostCard = ({ post, variant = 'standard' }) => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const PostCard = ({ post, variant = 'standard' }) => {
         <CardMedia
           component="img"
           height={variant === 'compact' ? 140 : 200}
-          image={post.imagePaths[0]}
+          image={getImageUrl(post.imagePaths[0])}
           alt={post.title}
           sx={{ objectFit: 'cover' }}
         />
