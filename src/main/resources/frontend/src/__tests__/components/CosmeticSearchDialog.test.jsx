@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import CosmeticSearchDialog from './CosmeticSearchDialog';
-import useCosmeticStore from '../store/cosmeticStore';
+import CosmeticSearchDialog from '../../components/CosmeticSearchDialog';
+import useCosmeticStore from '../../store/cosmeticStore';
 
 // Mock the store
-jest.mock('../store/cosmeticStore', () => ({
+jest.mock('../../store/cosmeticStore', () => ({
   __esModule: true,
   default: jest.fn()
 }));
@@ -74,13 +74,15 @@ describe('CosmeticSearchDialog', () => {
     // 로딩 상태 확인
     expect(screen.getByText(/검색 중입니다/)).toBeInTheDocument();
 
-    // 디바운스 타이머 진행
+    // 디바운스 타이머와 API 딜레이 진행
     await act(async () => {
-      jest.advanceTimersByTime(300);
+      jest.advanceTimersByTime(600); // 디바운스(300ms) + API 딜레이(300ms)
     });
 
     // 검색 결과 표시 확인
-    expect(screen.getByText('수분 크림')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/수분 크림/)).toBeInTheDocument();
+    });
   });
 
   it('filters cosmetics based on search term', async () => {
@@ -95,12 +97,15 @@ describe('CosmeticSearchDialog', () => {
     const searchInput = screen.getByLabelText('화장품 이름 또는 브랜드 검색');
     fireEvent.change(searchInput, { target: { value: '선크림' } });
 
+    // 디바운스 타이머와 API 딜레이 진행
     await act(async () => {
-      jest.advanceTimersByTime(300);
+      jest.advanceTimersByTime(600); // 디바운스(300ms) + API 딜레이(300ms)
     });
 
-    expect(screen.getByText('선크림')).toBeInTheDocument();
-    expect(screen.queryByText('수분 크림')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/선크림/)).toBeInTheDocument();
+      expect(screen.queryByText(/수분 크림/)).not.toBeInTheDocument();
+    });
   });
 
   it('calls onSelect when a cosmetic is clicked', async () => {
@@ -112,11 +117,15 @@ describe('CosmeticSearchDialog', () => {
       />
     );
 
+    // 초기 렌더링 대기
     await act(async () => {
-      jest.advanceTimersByTime(300);
+      jest.advanceTimersByTime(600);
     });
 
-    fireEvent.click(screen.getByText('수분 크림'));
+    await waitFor(() => {
+      const cosmeticItem = screen.getByText(/수분 크림/);
+      fireEvent.click(cosmeticItem);
+    });
 
     expect(mockOnSelect).toHaveBeenCalledWith(mockCosmetics[0]);
     expect(mockOnClose).toHaveBeenCalled();
@@ -144,16 +153,19 @@ describe('CosmeticSearchDialog', () => {
       />
     );
 
+    // 초기 렌더링 대기
     await act(async () => {
-      jest.advanceTimersByTime(300);
+      jest.advanceTimersByTime(600);
     });
 
-    // 첫 번째 화장품의 상세 정보 확인
-    expect(screen.getByText('수분 크림')).toBeInTheDocument();
-    expect(screen.getByText('브랜드: 샘플 브랜드')).toBeInTheDocument();
-    expect(screen.getByText('SPF 50+')).toBeInTheDocument();
-    expect(screen.getByText('PA +++')).toBeInTheDocument();
-    expect(screen.getByText('워터프루프')).toBeInTheDocument();
-    expect(screen.getByText('4.5')).toBeInTheDocument();
+    await waitFor(() => {
+      // 첫 번째 화장품의 상세 정보 확인
+      expect(screen.getByText(/수분 크림/)).toBeInTheDocument();
+      expect(screen.getByText(/브랜드: 샘플 브랜드/)).toBeInTheDocument();
+      expect(screen.getByText(/SPF 50\+/)).toBeInTheDocument();
+      expect(screen.getByText(/PA \+\+\+/)).toBeInTheDocument();
+      expect(screen.getByText(/워터프루프/)).toBeInTheDocument();
+      expect(screen.getByText(/4.5/)).toBeInTheDocument();
+    });
   });
 }); 

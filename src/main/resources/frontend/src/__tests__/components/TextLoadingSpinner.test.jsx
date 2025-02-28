@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import TextLoadingSpinner from './TextLoadingSpinner';
+import TextLoadingSpinner from '../../components/common/TextLoadingSpinner';
 
 describe('TextLoadingSpinner', () => {
   it('should render loading text', () => {
